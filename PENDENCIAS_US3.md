@@ -3,8 +3,8 @@
 Acompanhamento das tarefas da US3 e do que falta para o frontend sair do esqueleto
 navegável e ganhar conteúdo.
 
-- **Última atualização:** 29/10/2026
-- **Estado:** rotas, layouts, tokens e navegação prontos; telas de conteúdo vazias por decisão de escopo.
+- **Última atualização:** 01/11/2026
+- **Estado:** rotas, layouts, tokens, navegação e login com Google integrados; telas de conteúdo vazias por decisão de escopo.
 - **Guia de estrutura e telas:** [`README.md`](./README.md)
 
 ## Decisões já tomadas
@@ -42,7 +42,7 @@ navegável e ganhar conteúdo.
 - [ ] `/` (Início): decidir se a tela permanece e conectar os CTAs ao fluxo real.
 - [ ] `/meus-pedidos`: listar pedidos da cliente, com estados de carregando, vazio e erro.
 - [ ] `/meus-pedidos`: abrir detalhe/status de um pedido.
-- [ ] `/login`: substituir o mock por autenticação real e redirecionar após o login.
+- [x] `/login`: substituir o mock por autenticação real e redirecionar após o login.
 
 ### Pedido novo — conteúdo das etapas
 
@@ -77,24 +77,11 @@ implementado dentro do layout existente, sem recriar a barra de etapas nem o rod
 - [ ] `/gestao/agenda`: compromissos, despachos e entregas agrupados por data.
 - [ ] Definir se a gestão terá ações de edição/criação ou apenas leitura nesta fase.
 
-## Autenticação mockada e proteção de rotas
+## Autenticação e cliente HTTP
 
-- [ ] Criar estado de autenticação centralizado, por exemplo com `AuthContext`.
-- [ ] Disponibilizar operações `login`, `logout` e estado `isAuthenticated`.
-- [ ] Criar `ProtectedRoute` e proteger todas as rotas `/gestao/*`.
-- [ ] Redirecionar usuários não autenticados para `/login`.
-- [ ] Após login mockado, retornar à rota de gestão originalmente solicitada.
-- [ ] Adicionar ação de sair que encerra a sessão mockada e retorna para `/login`.
-
-## Cliente HTTP e integração com a API
-
-- [ ] Criar uma instância única de cliente HTTP em `src/services/` usando `VITE_API_URL`.
-- [ ] Definir como o token de autenticação será obtido e enviado no cabeçalho quando existir.
-- [ ] Tratar respostas `401` para encerrar a autenticação e redirecionar para `/login`.
-- [ ] Normalizar erros da API em mensagens amigáveis para a interface.
-- [ ] Confirmar o contrato de autenticação e os endpoints no repositório backend antes da integração real.
-- [ ] Configurar CORS no backend em uma tarefa separada, quando a integração entre aplicações for iniciada.
-- [ ] Recriar a pasta `src/services/`, removida junto com a persistência temporária em `localStorage`.
+Estas duas frentes saíram deste documento e passaram a ser acompanhadas em
+[`PENDENCIAS_US4.md`](./PENDENCIAS_US4.md): login com Google, sessão, cliente HTTP
+com renovação de token e proteção de rotas por papel.
 
 ## Componentes compartilhados
 
