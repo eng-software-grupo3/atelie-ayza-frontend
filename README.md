@@ -4,10 +4,7 @@ Aplicação frontend do projeto Ateliê Ayza, construída com React, TypeScript,
 React Router.
 
 > **Estado atual:** esqueleto navegável com login integrado. Layout, cores, navegação
-> e autenticação com Google estão prontos; o conteúdo das telas foi propositalmente
-> removido e será implementado nas próximas etapas. O backlog fica em
-> [`PENDENCIAS_US3.md`](./PENDENCIAS_US3.md) (estrutura e telas) e
-> [`PENDENCIAS_US4.md`](./PENDENCIAS_US4.md) (login e sessão).
+> e autenticação com Google estão prontos; o conteúdo das telas será implementado nas próximas etapas.
 
 ## Requisitos
 
@@ -57,37 +54,6 @@ npm run dev
 
 O Vite informa no terminal o endereço local para abrir no navegador.
 
-### Testar no celular
-
-O servidor já sobe exposto na rede local (`server.host` em `vite.config.ts`), com a
-porta fixa de `VITE_DEV_PORT`. Para abrir no celular:
-
-1. Conecte o celular na **mesma rede Wi-Fi** do PC.
-2. Descubra o IP do PC:
-   ```powershell
-   Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notlike '127.*' }
-   ```
-3. Rode `npm run dev` e abra no celular `http://<IP-DO-PC>:5173` (por exemplo,
-   `http://192.168.0.100:5173`). O terminal também mostra a linha `Network:` com essa URL.
-4. Na primeira execução, o Windows pode pedir para liberar o Node.js no firewall:
-   marque **Redes privadas**. Se o prompt não aparecer, crie a regra uma vez em um
-   PowerShell como administrador:
-   ```powershell
-   New-NetFirewallRule -DisplayName "Vite Dev 5173" -Direction Inbound -LocalPort 5173 -Protocol TCP -Action Allow -Profile Private
-   ```
-
-Ao salvar qualquer arquivo no PC, o celular atualiza sozinho (HMR do Vite). Para
-deixar com cara de app, use **Adicionar à tela inicial** no navegador do celular: o
-`public/manifest.webmanifest` define o nome **Ayza**, o ícone e o modo standalone.
-
-> Em HTTP na rede local o navegador cria um atalho, não uma PWA instalável com
-> funcionamento offline (isso exige HTTPS). Para instalação real seria preciso um
-> túnel com HTTPS ou um certificado local confiável no celular.
-
-Se a página não abrir no celular, verifique, nesta ordem: celular na mesma rede,
-firewall liberado, IP correto (ele pode mudar via DHCP) e se a porta `5173` não está
-em uso por outro processo.
-
 ## Variáveis de ambiente
 
 | Variável        | Descrição                                 | Padrão local            |
@@ -95,7 +61,7 @@ em uso por outro processo.
 | `VITE_DEV_PORT` | Porta do servidor de desenvolvimento Vite | `5173`                  |
 | `VITE_API_URL`  | URL base da API do repositório backend    | `http://localhost:3000` |
 
-O frontend inicia em `http://localhost:5173` por padrão e também fica acessível pelo IP do PC na rede local (veja [Testar no celular](#testar-no-celular)). Essa porta é independente da porta da API: `VITE_API_URL` permanece em `http://localhost:3000`. Variáveis `VITE_*` são incluídas no bundle do navegador; não coloque segredos nelas. O backend separado atualmente expõe Swagger em `http://localhost:3000/api/docs`.
+O frontend inicia em `http://localhost:5173` por padrão e também fica acessível pelo IP do PC na rede local. Essa porta é independente da porta da API: `VITE_API_URL` permanece em `http://localhost:3000`. Variáveis `VITE_*` são incluídas no bundle do navegador; não coloque segredos nelas. O backend separado atualmente expõe Swagger em `http://localhost:3000/api/docs`.
 
 ## Scripts
 
