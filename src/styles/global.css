@@ -831,3 +831,114 @@ a.botao--secundario:hover {
 .form-cadastro__acoes button:hover {
   filter: brightness(0.95);
 }
+
+/* listagem de tecidos ---------------------------------------- */
+
+.lista-tecidos {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tecido-card {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid var(--cor-destaque);
+  border-radius: 14px;
+  background: var(--cor-superficie);
+}
+
+.tecido-card__imagem,
+.tecido-card__sem-imagem {
+  width: 70px;
+  height: 100px;
+  flex-shrink: 0;
+  border-radius: 6px;
+}
+
+.tecido-card__imagem {
+  object-fit: cover;
+}
+
+.tecido-card__sem-imagem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cor-neutro);
+  color: var(--cor-texto-suave);
+  font-size: 11px;
+  text-align: center;
+}
+
+.tecido-card__conteudo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  gap: 10px;
+}
+
+.tecido-card__topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tecido-card__nome {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.tecido-card__preco,
+.tecido-card__quantidade {
+  padding: 2px 6px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background: #fff;
+  color: #333;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.tecido-card__estoque {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  font-size: 12px;
+}
+
+.tecido-card__acoes {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.tecido-card__excluir {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border: none;
+  border-radius: 6px;
+  background: #c94f24;
+  color: #fff;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.tecido-card__excluir:hover:not(:disabled) {
+  filter: brightness(0.9);
+}
+
+.tecido-card__excluir:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
