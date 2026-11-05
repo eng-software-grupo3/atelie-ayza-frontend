@@ -1,30 +1,55 @@
-import { useState } from 'react';
-import { Logo } from '../../components/Logo.tsx';
+import { Link, Navigate, useLocation } from 'react-router-dom';
+import assinatura from '../../assets/home/assinatura-1.svg';
+import marca from '../../assets/home/marca.png';
+import { useAuth } from '../../contexts/AuthContext.tsx';
+import { homeDoUsuario, salvarRetorno, urlLoginGoogle } from '../../services/auth.ts';
 
+type EstadoLogin = {
+  erro?: string;
+  de?: string;
+};
+
+/**
+ * Tela de login para cliente e gestão.
+ *
+ * O botão inicia o OAuth do backend por navegação completa. Depois do Google,
+ * a API devolve os tokens em `/auth/callback`; o papel (`isAdmin`) decide se a
+ * pessoa segue para `/gestao` ou para `/meus-pedidos`.
+ */
 export function Login() {
-  const [aviso, setAviso] = useState(false);
+  const { usuario, carregando } = useAuth();
+  const local = useLocation();
+  const estado = (local.state ?? {}) as EstadoLogin;
+
+  if (!carregando && usuario) {
+    return <Navigate to={homeDoUsuario(usuario)} replace />;
+  }
 
   return (
-    <div className="app-frame">
-      <main className="app-main">
-        <div className="login">
-          <Logo to="" compacto />
-          <h1 className="login__titulo">Acesse sua conta</h1>
-          <p className="texto-suave">
-            Área de gestão do ateliê. A autenticação será conectada na próxima etapa do projeto.
-          </p>
+    <div className="app-frame app-frame--login">
+      <main className="login">
+        <h1 className="apenas-leitor">Entrar na sua conta</h1>
 
-          <button
-            type="button"
-            className="botao botao--secundario botao--bloco"
-            onClick={() => setAviso(true)}
+        <Link className="login__marca" to="/" aria-label="Ateliê Ayza — início">
+          <img className="login__desenho" src={marca} alt="" />
+          <img className="login__assinatura" src={assinatura} alt="" />
+          <span className="login__ateliê">ATELIÊ</span>
+        </Link>
+
+        <div className="login__acao">
+          <a
+            className="login__botao"
+            href={urlLoginGoogle()}
+            onClick={() => {
+              if (estado.de) salvarRetorno(estado.de);
+            }}
           >
-            Entre com Google
-          </button>
+            Entrar com Google
+          </a>
 
-          {aviso ? (
-            <p className="alerta alerta--erro" role="status">
-              O login ainda não está disponível nesta versão.
+          {estado.erro ? (
+            <p className="login__aviso" role="alert">
+              {estado.erro}
             </p>
           ) : null}
         </div>
