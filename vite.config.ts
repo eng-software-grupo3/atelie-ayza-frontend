@@ -7,15 +7,29 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     server: {
-      port: Number(env.VITE_DEV_PORT) || 5173,
+      // Expõe o dev server na rede local para abrir no celular pelo IP do PC.
       host: '0.0.0.0',
+      // Mantém a porta fixa: se 5173 estiver ocupada, falha em vez de mudar a URL.
       strictPort: true,
+      port: Number(env.VITE_DEV_PORT) || 5173,
       proxy: {
         '/api': {
           target: 'http://localhost:3000',
           changeOrigin: true,
         },
-        '/auth': {
+        '/auth/google': {
+          target: 'http://localhost:3000',
+          changeOrigin: true,
+        },
+        '/auth/me': {
+          target: 'http://localhost:3000',
+          changeOrigin: true,
+        },
+        '/auth/refresh': {
+          target: 'http://localhost:3000',
+          changeOrigin: true,
+        },
+        '/auth/logout': {
           target: 'http://localhost:3000',
           changeOrigin: true,
         },
