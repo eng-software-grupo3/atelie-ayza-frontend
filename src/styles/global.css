@@ -381,6 +381,15 @@ textarea {
   width: 100%;
 }
 
+.botao--cadastro {
+  width: 100%;
+  color: white;
+  background: var(--cor-verde);
+  border-radius: var(--raio);
+  margin-left: 30px;
+  font-size: 14px;
+}
+
 a.botao,
 a.botao:hover {
   color: var(--cor-destaque-texto);
@@ -714,4 +723,111 @@ a.botao--secundario:hover {
   flex-direction: column;
   gap: 12px;
   align-items: flex-start;
+}
+
+/* janela de cadastro ---------------------------------------- */
+
+.modal-cadastro {
+  width: min(360px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 22px;
+  overflow-y: auto;
+  border: 1px solid var(--cor-destaque);
+  border-radius: var(--raio);
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
+}
+
+.modal-cadastro::backdrop {
+  background: rgb(0 0 0 / 55%);
+}
+
+.modal-cadastro__cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.modal-cadastro__cabecalho h2 {
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--cor-destaque);
+}
+
+.modal-cadastro__fechar {
+  padding: 0 4px;
+  border: none;
+  background: transparent;
+  color: var(--cor-destaque);
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* Campos do formulário */
+.form-cadastro {
+  display: grid;
+  gap: 12px;
+}
+
+.form-cadastro label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--cor-texto-suave);
+}
+
+.form-cadastro input {
+  width: 100%;
+  min-width: 0;
+  padding: 7px 8px;
+  border: 1px solid var(--cor-destaque);
+  border-radius: 5px;
+  background: var(--cor-cartao);
+  color: var(--cor-texto);
+  font-size: 13px;
+}
+
+.form-cadastro input::placeholder {
+  color: var(--cor-destaque);
+}
+
+.form-cadastro input::file-selector-button {
+  border: 1px solid var(--cor-destaque);
+  border-radius: 4px;
+  background: var(--cor-fundo);
+  color: var(--cor-destaque);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Valor e metros lado a lado; botões lado a lado */
+.form-cadastro__linha,
+.form-cadastro__acoes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.form-cadastro__acoes button {
+  padding: 8px;
+  border: 1px solid var(--cor-destaque);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--cor-destaque);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.form-cadastro__acoes button[type="submit"] {
+  background: var(--cor-destaque);
+  color: var(--cor-destaque-texto);
+}
+
+.form-cadastro__acoes button:hover {
+  filter: brightness(0.95);
 }
