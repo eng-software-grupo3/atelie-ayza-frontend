@@ -30,8 +30,9 @@ export type SessaoSalva = {
 
 const CHAVE_SESSAO = 'atelie.sessao';
 const CHAVE_RETORNO = 'atelie.retorno';
-const API_URL =
-  (import.meta.env.VITE_API_URL as string | undefined)?.trim() || 'http://localhost:3000';
+// Usa a mesma origem do frontend por padrão; no desenvolvimento, o Vite
+// encaminha /api e as rotas /auth da API para localhost:3000.
+const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.trim() || '';
 
 export function urlApi(caminho: string): string {
   const base = API_URL.replace(/\/+$/, '');

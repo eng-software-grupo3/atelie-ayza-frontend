@@ -1,6 +1,6 @@
 # Guia local — US de login com Google
 
-Este guia reúne a configuração e os passos para executar e validar o login com Google. O sistema é dividido em dois repositórios: `atelie-ayza-backend` (API NestJS) e `atelie-ayza-frontend` (React/Vite). O frontend sozinho não autentica: a API e o PostgreSQL também precisam estar disponíveis.
+Este guia reúne a configuração e os passos para executar e validar o login com Google. O sistema é dividido em dois repositórios: `atelie-ayza-backend` (API NestJS) e `atelie-ayza-frontend` (React/Vite). O frontend sozinho não autentica: a API e o PostgreSQL também precisam estar disponíveis. O fluxo abaixo é para desenvolvimento local: cada pessoa roda sua própria API e banco na máquina; não depende do IP ou nome do computador de outra pessoa.
 
 ## Endereços e fluxo
 
@@ -11,7 +11,7 @@ Este guia reúne a configuração e os passos para executar e validar o login co
 | PostgreSQL | `localhost:5432` | Usuários e sessões |
 | Swagger | `http://localhost:3000/api/docs` | Verificar se a API está ativa |
 
-O botão do frontend faz uma navegação completa para `GET http://localhost:3000/auth/google`. A API redireciona ao Google. O Google retorna para **a API** em `/auth/google/callback`; depois a API redireciona para `http://localhost:5173/auth/callback` com o resultado. O frontend guarda os tokens e consulta `GET /auth/me` para obter o perfil e encaminhar a pessoa à área correta.
+O botão do frontend faz uma navegação completa para `/auth/google` na própria origem do frontend. No desenvolvimento, o proxy do Vite encaminha essa rota e as chamadas `/api` para a API local em `http://localhost:3000`. A API redireciona ao Google. O Google retorna para **a API** em `/auth/google/callback`; depois a API redireciona para `http://localhost:5173/auth/callback` com o resultado. O frontend guarda os tokens e consulta `GET /auth/me` para obter o perfil e encaminhar a pessoa à área correta.
 
 ## Pré-requisitos
 
@@ -28,7 +28,7 @@ No Google Cloud Console, em **APIs e serviços → Credenciais**, crie ou abra u
 http://localhost:3000/auth/google/callback
 ```
 
-Copie o Client ID e o Client secret do mesmo cliente OAuth. Se a tela de consentimento estiver em modo de teste, adicione as contas que serão usadas no teste como usuários de teste. O redirect URI cadastrado no Google é o da **API**, não o do frontend.
+Copie o Client ID e o Client secret do mesmo cliente OAuth. Se a tela de consentimento estiver em modo de teste, adicione as contas de todos os parceiros que testarão o login como usuários de teste. Cada pessoa precisa configurar credenciais OAuth válidas no `.env` local do backend; distribua o Client secret por um canal seguro e nunca o versione. O redirect URI cadastrado no Google é o da **API**, não o do frontend, e é igual para todos (`localhost:3000`).
 
 ## Variáveis de ambiente
 
@@ -76,11 +76,11 @@ Na raiz de `atelie-ayza-frontend`, crie `.env` a partir do exemplo:
 Copy-Item .env.example .env
 ```
 
-Para execução local, confirme:
+Para execução local, confirme (vazio significa usar a origem do frontend e o proxy do Vite):
 
 ```dotenv
 VITE_DEV_PORT=5173
-VITE_API_URL=http://localhost:3000
+VITE_API_URL=
 ```
 
 O Client secret do Google **nunca** deve ser colocado no frontend ou em uma variável `VITE_*`; variáveis `VITE_*` são enviadas ao navegador.
@@ -174,7 +174,7 @@ npm run lint
 
 | Sintoma | Causa provável / verificação |
 | --- | --- |
-| `ERR_CONNECTION_REFUSED` ao clicar no botão | A API não está ouvindo na URL de `VITE_API_URL` (localmente, `http://localhost:3000`). Inicie a API e confira `/api/docs`. |
+| `ERR_CONNECTION_REFUSED` ao clicar no botão | Confira se a API local está ouvindo na porta 3000 e abra `http://localhost:3000/api/docs`. O login usa o proxy do Vite na origem do frontend. |
 | API não inicia ou `/api/docs` falha | Confira se o PostgreSQL está ativo em `localhost:5432`, se o `.env` do backend existe e se as credenciais do banco estão corretas. |
 | API responde `Missing GOOGLE_CLIENT_SECRET` | Preencha `GOOGLE_CLIENT_SECRET` no `.env` do backend e reinicie a API. Nunca coloque o segredo no frontend. |
 | Google informa `redirect_uri_mismatch` | O URI registrado no Google deve ser exatamente `http://localhost:3000/auth/google/callback` e igual a `GOOGLE_CALLBACK_URL`. |
