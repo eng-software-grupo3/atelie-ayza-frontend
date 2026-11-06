@@ -6,39 +6,8 @@ import {
   type SubmitEvent as ReactSubmitEvent,
 } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { useCallback, useEffect, useState, type FocusEvent, type FormEvent } from 'react';
-
-type Modelo = {
-  id: string;
-  nome: string;
-  parte: 'CIMA' | 'BAIXO';
-  valor: number;
-  metragem_media_m: number;
-  svg_url: string;
-  habilitado: boolean;
-};
-
-type ModeloForm = Omit<Modelo, 'id' | 'habilitado'>;
-
-const apiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
-
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const headers = new Headers(init?.headers);
-  if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
-  const response = await fetch(`${apiUrl}${path}`, {
-    ...init,
-    headers,
-  });
-  if (!response.ok) {
-    const body = await response.json().catch(() => null) as { message?: string | string[] } | null;
-    const message = Array.isArray(body?.message) ? body.message.join(', ') : body?.message;
-    throw new Error(message || `Erro ${response.status} ao comunicar com a API.`);
-  }
-  if (response.status === 204) return undefined as T;
-  return response.json() as Promise<T>;
-}
-
-const vazio: ModeloForm = { nome: '', parte: 'CIMA', valor: 0, metragem_media_m: 2.5, svg_url: '' };
+import { lerSessao, urlApi } from '../../services/auth.ts';
+import '../../styles/estoque-tecidos.css';
 
 const categorias = [
   { to: '/gestao/estoque/tecidos', label: 'Tecidos' },
@@ -54,44 +23,68 @@ type Tecido = {
   quantidade_m: string | number;
 };
 
+function FotoTecido({ foto, nome }: { foto?: string | null; nome: string }) {
+  const [falhou, setFalhou] = useState(false);
+  const endereco = foto?.trim();
+  const src =
+    endereco && (/^(https?:|data:image\/|blob:)/i.test(endereco) ? endereco : urlApi(endereco));
+
+  if (!src || falhou) {
+    return (
+      <div className="tecido-card__sem-imagem" role="img" aria-label={`Sem imagem de ${nome}`}>
+        <svg
+          viewBox="0 0 32 32"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.3"
+          aria-hidden="true"
+        >
+          <rect x="4" y="5" width="24" height="22" rx="3" />
+          <circle cx="12" cy="12" r="2" />
+          <path d="m5 23 7-7 5 5 4-4 6 6" />
+        </svg>
+        <span>Sem imagem</span>
+      </div>
+    );
+  }
+  return (
+    <img
+      className="tecido-card__imagem"
+      src={src}
+      alt={`Estampa de ${nome}`}
+      onError={() => setFalhou(true)}
+    />
+  );
+}
+
 export function Estoque() {
   const conteudoEstoque = useRef<HTMLElement>(null);
 
   function abrirCadastro() {
-    const modal =
-      conteudoEstoque.current?.querySelector<HTMLDialogElement>(
-        '.modal-cadastro',
-      );
+    const modal = conteudoEstoque.current?.querySelector<HTMLDialogElement>('.modal-cadastro');
 
     modal?.querySelector('form')?.reset();
     modal?.showModal();
   }
 
   return (
-    <main ref={conteudoEstoque} className="app-main">
-      <nav
-        className="nav-pill nav-pill--sub"
-        aria-label="Categorias de estoque"
-      >
+    <main ref={conteudoEstoque} className="app-main estoque-pagina">
+      <nav className="estoque-categorias" aria-label="Categorias de estoque">
         {categorias.map((categoria) => (
           <NavLink
             key={categoria.to}
             to={categoria.to}
             className={({ isActive }) =>
               isActive
-                ? 'nav-pill__item nav-pill__item--ativo'
-                : 'nav-pill__item'
+                ? 'estoque-categorias__aba estoque-categorias__aba--ativa'
+                : 'estoque-categorias__aba'
             }
           >
             {categoria.label}
           </NavLink>
         ))}
 
-        <button
-          type="button"
-          onClick={abrirCadastro}
-          className="botao--cadastro"
-        >
+        <button type="button" onClick={abrirCadastro} className="botao--cadastro">
           +Cadastrar
         </button>
       </nav>
@@ -103,17 +96,12 @@ export function Estoque() {
 
 export function EstoqueTecidos() {
   const modalCadastro = useRef<HTMLDialogElement>(null);
+  const modalExclusao = useRef<HTMLDialogElement>(null);
+  const [tecidoSelecionado, setTecidoSelecionado] = useState<Tecido | null>(null);
+  const [erroExclusao, setErroExclusao] = useState('');
+  const [editando, setEditando] = useState<Tecido | null>(null);
 
-  
-  const [tecidos, setTecidos] = useState<Tecido[]>([
-  {
-    id: 1,
-    nome: 'Algodão floral',
-    foto: null,
-    preco_metro: 29.9,
-    quantidade_m: 15,
-  },
-]);
+  const [tecidos, setTecidos] = useState<Tecido[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erroListagem, setErroListagem] = useState('');
 
@@ -121,9 +109,7 @@ export function EstoqueTecidos() {
   const [erroCadastro, setErroCadastro] = useState('');
   const [sucesso, setSucesso] = useState('');
 
-  const [excluindoId, setExcluindoId] = useState<Tecido['id'] | null>(
-    null,
-  );
+  const [excluindoId, setExcluindoId] = useState<Tecido['id'] | null>(null);
 
   const carregarTecidos = useCallback(async () => {
     setCarregando(true);
@@ -143,9 +129,7 @@ export function EstoqueTecidos() {
       });
 
       if (!resposta.ok) {
-        throw new Error(
-          `Não foi possível carregar os tecidos. Código: ${resposta.status}.`,
-        );
+        throw new Error(`Não foi possível carregar os tecidos. Código: ${resposta.status}.`);
       }
 
       const dados: Tecido[] = await resposta.json();
@@ -157,30 +141,37 @@ export function EstoqueTecidos() {
       setTecidos(dados);
     } catch (erro) {
       setErroListagem(
-        erro instanceof Error
-          ? erro.message
-          : 'Ocorreu um erro ao carregar os tecidos.',
+        erro instanceof Error ? erro.message : 'Ocorreu um erro ao carregar os tecidos.',
       );
     } finally {
       setCarregando(false);
     }
   }, []);
 
-  // useEffect(() => {
-  //   void carregarTecidos();
-  // }, [carregarTecidos]);
+  useEffect(() => {
+    void carregarTecidos();
+  }, [carregarTecidos]);
 
   function fecharCadastro() {
     modalCadastro.current?.close();
   }
 
-  async function cadastrarTecido(
-    event: ReactSubmitEvent<HTMLFormElement>,
-  ) {
+  async function salvarTecido(event: ReactSubmitEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (salvando) return;
 
     const formulario = event.currentTarget;
     const dados = new FormData(formulario);
+    const nome = String(dados.get('nome') ?? '').trim();
+    if (!nome) {
+      setErroCadastro('Informe o nome do tecido.');
+      return;
+    }
+    dados.set('nome', nome);
+    const foto = dados.get('foto');
+    if (!(foto instanceof File) || foto.size === 0) dados.delete('foto');
+    if (editando) dados.delete('quantidade_m');
+    const acao = editando ? 'atualizar' : 'cadastrar';
 
     setSalvando(true);
     setErroCadastro('');
@@ -190,11 +181,14 @@ export function EstoqueTecidos() {
       const sessao = lerSessao();
 
       if (!sessao) {
-        throw new Error('Faça login para cadastrar tecidos.');
+        throw new Error(`Faça login para ${acao} tecidos.`);
       }
 
-      const resposta = await fetch(urlApi('/api/gestao/tecidos'), {
-        method: 'POST',
+      const caminho = editando
+        ? `/api/gestao/tecidos/${encodeURIComponent(editando.id)}`
+        : '/api/gestao/tecidos';
+      const resposta = await fetch(urlApi(caminho), {
+        method: editando ? 'PATCH' : 'POST',
         headers: {
           Authorization: `Bearer ${sessao.accessToken}`,
         },
@@ -202,21 +196,17 @@ export function EstoqueTecidos() {
       });
 
       if (!resposta.ok) {
-        throw new Error(
-          `Não foi possível cadastrar o tecido. Código: ${resposta.status}.`,
-        );
+        throw new Error(`Não foi possível ${acao} o tecido. Código: ${resposta.status}.`);
       }
 
       formulario.reset();
       fecharCadastro();
-      setSucesso('Tecido cadastrado com sucesso!');
+      setSucesso(editando ? 'Tecido atualizado com sucesso!' : 'Tecido cadastrado com sucesso!');
 
       await carregarTecidos();
     } catch (erro) {
       setErroCadastro(
-        erro instanceof Error
-          ? erro.message
-          : 'Ocorreu um erro ao cadastrar o tecido.',
+        erro instanceof Error ? erro.message : `Ocorreu um erro ao ${acao} o tecido.`,
       );
     } finally {
       setSalvando(false);
@@ -224,14 +214,10 @@ export function EstoqueTecidos() {
   }
 
   async function excluirTecido(tecido: Tecido) {
-    const confirmou = window.confirm(
-      `Deseja excluir o tecido "${tecido.nome}"?`,
-    );
-
-    if (!confirmou) return;
+    if (excluindoId !== null) return;
 
     setExcluindoId(tecido.id);
-    setErroListagem('');
+    setErroExclusao('');
     setSucesso('');
 
     try {
@@ -241,34 +227,24 @@ export function EstoqueTecidos() {
         throw new Error('Faça login para excluir tecidos.');
       }
 
-      const resposta = await fetch(
-        urlApi(
-          `/api/gestao/tecidos/${encodeURIComponent(tecido.id)}`,
-        ),
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${sessao.accessToken}`,
-          },
+      const resposta = await fetch(urlApi(`/api/gestao/tecidos/${encodeURIComponent(tecido.id)}`), {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${sessao.accessToken}`,
         },
-      );
+      });
 
       if (!resposta.ok) {
-        throw new Error(
-          `Não foi possível excluir o tecido. Código: ${resposta.status}.`,
-        );
+        throw new Error(`Não foi possível excluir o tecido. Código: ${resposta.status}.`);
       }
 
-      setTecidos((listaAtual) =>
-        listaAtual.filter((item) => item.id !== tecido.id),
-      );
+      setTecidos((listaAtual) => listaAtual.filter((item) => item.id !== tecido.id));
 
       setSucesso('Tecido excluído com sucesso!');
+      modalExclusao.current?.close();
     } catch (erro) {
-      setErroListagem(
-        erro instanceof Error
-          ? erro.message
-          : 'Ocorreu um erro ao excluir o tecido.',
+      setErroExclusao(
+        erro instanceof Error ? erro.message : 'Ocorreu um erro ao excluir o tecido.',
       );
     } finally {
       setExcluindoId(null);
@@ -301,46 +277,51 @@ export function EstoqueTecidos() {
 
       <div className="lista-tecidos">
         {tecidos.map((tecido) => (
-          <article className="tecido-card" key={tecido.id}>
-            {tecido.foto ? (
-              <img
-                className="tecido-card__imagem"
-                src={tecido.foto}
-                alt={tecido.nome}
-              />
-            ) : (
-              <div className="tecido-card__sem-imagem">
-                Sem imagem
-              </div>
-            )}
+          <article className="tecido-card" key={tecido.id} aria-label={tecido.nome}>
+            <FotoTecido key={tecido.foto ?? 'sem-foto'} foto={tecido.foto} nome={tecido.nome} />
 
             <div className="tecido-card__conteudo">
               <div className="tecido-card__topo">
-                <h3 className="tecido-card__nome">
-                  {tecido.nome}
-                </h3>
+                <h3 className="tecido-card__nome">{tecido.nome}</h3>
 
-                <span className="tecido-card__preco">
-                  {Number(tecido.preco_metro).toLocaleString(
-                    'pt-BR',
-                    {
+                <div className="tecido-card__valor-edicao">
+                  <button
+                    type="button"
+                    className="tecido-card__editar"
+                    disabled={carregando || excluindoId !== null || salvando}
+                    aria-label={`Editar tecido ${tecido.nome}`}
+                    onClick={() => {
+                      setEditando(tecido);
+                      setErroCadastro('');
+                      modalCadastro.current?.showModal();
+                    }}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      aria-hidden="true"
+                    >
+                      <path d="m15 5 4 4M4 20l5-1L20 8a2.8 2.8 0 0 0-4-4L5 15l-1 5Z M5 15l4 4" />
+                    </svg>
+                  </button>
+                  <span className="tecido-card__preco">
+                    {Number(tecido.preco_metro).toLocaleString('pt-BR', {
                       style: 'currency',
                       currency: 'BRL',
-                    },
-                  )}
-                </span>
+                    })}
+                  </span>
+                </div>
               </div>
 
               <p className="tecido-card__estoque">
                 Metros atuais:
                 <span className="tecido-card__quantidade">
-                  {Number(tecido.quantidade_m).toLocaleString(
-                    'pt-BR',
-                    {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    },
-                  )}
+                  {Number(tecido.quantidade_m).toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </span>
               </p>
 
@@ -348,14 +329,16 @@ export function EstoqueTecidos() {
                 <button
                   type="button"
                   className="tecido-card__excluir"
-                  onClick={() => excluirTecido(tecido)}
+                  onClick={() => {
+                    setTecidoSelecionado(tecido);
+                    setErroExclusao('');
+                    modalExclusao.current?.showModal();
+                  }}
                   disabled={excluindoId !== null || carregando}
                   aria-label={`Excluir tecido ${tecido.nome}`}
                 >
                   <span aria-hidden="true">×</span>
-                  {excluindoId === tecido.id
-                    ? 'Excluindo...'
-                    : 'Excluir'}
+                  {excluindoId === tecido.id ? 'Excluindo...' : 'Excluir'}
                 </button>
               </div>
             </div>
@@ -364,16 +347,75 @@ export function EstoqueTecidos() {
       </div>
 
       <dialog
+        ref={modalExclusao}
+        className="tecido-exclusao"
+        aria-labelledby="titulo-exclusao-tecido"
+        aria-describedby="descricao-exclusao-tecido"
+        aria-busy={excluindoId !== null}
+        onCancel={(event) => {
+          if (excluindoId !== null) event.preventDefault();
+        }}
+        onClose={() => {
+          setTecidoSelecionado(null);
+          setErroExclusao('');
+        }}
+      >
+        <button
+          type="button"
+          className="tecido-exclusao__fechar"
+          aria-label="Fechar confirmação"
+          disabled={excluindoId !== null}
+          onClick={() => modalExclusao.current?.close()}
+        >
+          ×
+        </button>
+        <h2 id="titulo-exclusao-tecido" className="apenas-leitor">
+          Confirmar exclusão
+        </h2>
+        <p id="descricao-exclusao-tecido">
+          Tem certeza que deseja excluir o item do seu estoque? Ele deixará de estar disponível para
+          os clientes.
+        </p>
+        <p className="tecido-exclusao__nome">{tecidoSelecionado?.nome}</p>
+        {erroExclusao && (
+          <p className="alerta alerta--erro" role="alert">
+            {erroExclusao}
+          </p>
+        )}
+        <div className="tecido-exclusao__acoes">
+          <button
+            type="button"
+            disabled={excluindoId !== null}
+            onClick={() => modalExclusao.current?.close()}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            disabled={excluindoId !== null || !tecidoSelecionado}
+            onClick={() => {
+              if (tecidoSelecionado) void excluirTecido(tecidoSelecionado);
+            }}
+          >
+            {excluindoId !== null ? 'Excluindo...' : 'Excluir'}
+          </button>
+        </div>
+      </dialog>
+
+      <dialog
         ref={modalCadastro}
         className="modal-cadastro"
         aria-labelledby="titulo-cadastro-tecido"
-        onClose={() => setErroCadastro('')}
+        onClose={() => {
+          setErroCadastro('');
+          setEditando(null);
+        }}
         onCancel={(event) => {
           if (salvando) event.preventDefault();
         }}
       >
         <div className="modal-cadastro__cabecalho">
-          <h2 id="titulo-cadastro-tecido">Cadastrar Tecido</h2>
+          <h2 id="titulo-cadastro-tecido">{editando ? 'Editar Tecido' : 'Cadastrar Tecido'}</h2>
 
           <button
             type="button"
@@ -387,8 +429,9 @@ export function EstoqueTecidos() {
         </div>
 
         <form
+          key={editando?.id ?? 'novo'}
           className="form-cadastro"
-          onSubmit={cadastrarTecido}
+          onSubmit={salvarTecido}
           aria-busy={salvando}
         >
           <label>
@@ -398,19 +441,19 @@ export function EstoqueTecidos() {
               name="nome"
               placeholder="Nome"
               required
+              defaultValue={editando?.nome ?? ''}
             />
           </label>
 
           <label>
             Imagem do tecido (estampa)
-            <input
-              type="file"
-              name="foto"
-              accept="image/*"
-            />
+            <input type="file" name="foto" accept="image/*" />
+            {editando && (
+              <span className="form-cadastro__ajuda">Deixe vazio para manter a imagem atual.</span>
+            )}
           </label>
 
-          <div className="form-cadastro__linha">
+          <div className={editando ? undefined : 'form-cadastro__linha'}>
             <label>
               Valor por metro R$
               <input
@@ -420,20 +463,23 @@ export function EstoqueTecidos() {
                 min="0"
                 step="0.01"
                 required
+                defaultValue={editando?.preco_metro}
               />
             </label>
 
-            <label>
-              Metros atuais
-              <input
-                type="number"
-                name="quantidade_m"
-                placeholder="Ex.: 42,20"
-                min="0"
-                step="0.01"
-                required
-              />
-            </label>
+            {!editando && (
+              <label>
+                Metros atuais
+                <input
+                  type="number"
+                  name="quantidade_m"
+                  placeholder="Ex.: 42,20"
+                  min="0"
+                  step="0.01"
+                  required
+                />
+              </label>
+            )}
           </div>
 
           {erroCadastro && (
@@ -443,16 +489,12 @@ export function EstoqueTecidos() {
           )}
 
           <div className="form-cadastro__acoes">
-            <button
-              type="button"
-              onClick={fecharCadastro}
-              disabled={salvando}
-            >
+            <button type="button" onClick={fecharCadastro} disabled={salvando}>
               Cancelar
             </button>
 
             <button type="submit" disabled={salvando}>
-              {salvando ? 'Salvando...' : 'Salvar Item'}
+              {salvando ? 'Salvando...' : editando ? 'Salvar alterações' : 'Salvar Item'}
             </button>
           </div>
         </form>
@@ -466,198 +508,5 @@ export function EstoqueAderecos() {
 }
 
 export function EstoqueModelos() {
-  const [modelos, setModelos] = useState<Modelo[]>([]);
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState('');
-  const [erroModal, setErroModal] = useState('');
-  const [sucesso, setSucesso] = useState('');
-  const [modal, setModal] = useState(false);
-  const [editando, setEditando] = useState<Modelo | null>(null);
-  const [form, setForm] = useState<ModeloForm>(vazio);
-  const [salvando, setSalvando] = useState(false);
-  const [salvandoModelo, setSalvandoModelo] = useState<string | null>(null);
-
-  const carregar = useCallback(async () => {
-    try {
-      setModelos(await request<Modelo[]>('/api/gestao/modelos'));
-      setErro('');
-    } catch (e) {
-      setErro(e instanceof Error ? e.message : 'Não foi possível carregar os modelos.');
-    } finally { setCarregando(false); }
-  }, []);
-
-  /* oxlint-disable react(set-state-in-effect) -- loading remote data is the effect's purpose */
-  useEffect(() => { void carregar(); }, [carregar]);
-  /* oxlint-enable react(set-state-in-effect) */
-
-  function abrir(modelo?: Modelo) {
-    setErroModal('');
-    setErro('');
-    setSucesso('');
-    setEditando(modelo ?? null);
-    setForm(modelo ? { nome: modelo.nome, parte: modelo.parte, valor: modelo.valor, metragem_media_m: modelo.metragem_media_m, svg_url: modelo.svg_url } : vazio);
-    setModal(true);
-  }
-
-  async function selecionarImagem(file?: File) {
-    if (!file) return;
-    setErroModal('');
-    if (file.type !== 'image/svg+xml' && !file.name.toLowerCase().endsWith('.svg')) {
-      setForm((atual) => ({ ...atual, svg_url: '' }));
-      setErroModal('O arquivo precisa estar no formato SVG. Imagens PNG e JPG não são aceitas.');
-      return;
-    }
-    try {
-      const svg = await file.text();
-      if (!/<svg[\s>]/i.test(svg)) {
-        setForm((atual) => ({ ...atual, svg_url: '' }));
-        setErroModal('O arquivo selecionado não contém um SVG válido.');
-        return;
-      }
-      setForm((atual) => ({ ...atual, svg_url: `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}` }));
-    } catch {
-      setErroModal('Não foi possível ler o arquivo selecionado. Tente escolher o SVG novamente.');
-    }
-  }
-
-  async function salvar(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setErroModal('');
-    setSucesso('');
-    if (!form.svg_url) {
-      setErroModal('Escolha uma imagem SVG para o modelo antes de salvar.');
-      return;
-    }
-    setSalvando(true);
-    try {
-      const body = { nome: form.nome.trim(), parte: form.parte, valor: Number(form.valor), metragem_media_m: Number(form.metragem_media_m), svg_url: form.svg_url };
-      await request<Modelo>(editando ? `/api/gestao/modelos/${editando.id}` : '/api/gestao/modelos', {
-        method: editando ? 'PATCH' : 'POST', body: JSON.stringify(body),
-      });
-      setModal(false);
-      setSucesso(editando ? 'Modelo atualizado com sucesso.' : 'Modelo cadastrado com sucesso.');
-      await carregar();
-    } catch (e) { setErroModal(e instanceof Error ? e.message : 'Não foi possível salvar o modelo.'); }
-    finally { setSalvando(false); }
-  }
-
-  async function habilitar(modelo: Modelo) {
-    try {
-      await request(`/api/gestao/modelos/${modelo.id}/habilitado`, { method: 'PATCH', body: JSON.stringify({ habilitado: !modelo.habilitado }) });
-      await carregar();
-    } catch (e) { setErro(e instanceof Error ? e.message : 'Não foi possível alterar o status.'); }
-  }
-
-  async function atualizarCampoModelo(
-    modelo: Modelo,
-    campo: 'valor' | 'metragem_media_m',
-    valor: number,
-  ): Promise<boolean> {
-    if (salvandoModelo || !Number.isFinite(valor)) return false;
-    setSalvandoModelo(modelo.id);
-    setErro('');
-    setSucesso('');
-    try {
-      const atualizado = await request<Modelo>(`/api/gestao/modelos/${modelo.id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ [campo]: valor }),
-      });
-      setModelos((atuais) => atuais.map((item) => item.id === atualizado.id ? atualizado : item));
-      return true;
-    } catch (e) {
-      setErro(e instanceof Error ? e.message : 'Não foi possível atualizar o modelo.');
-      return false;
-    } finally {
-      setSalvandoModelo(null);
-    }
-  }
-
-  async function ajustarMetragem(modelo: Modelo, variacao: number) {
-    const atual = Number(modelo.metragem_media_m);
-    const proximo = Number((atual + variacao).toFixed(2));
-    if (proximo < 0.01) return;
-    await atualizarCampoModelo(modelo, 'metragem_media_m', proximo);
-  }
-
-  async function salvarNumeroDoCard(
-    event: FocusEvent<HTMLInputElement>,
-    modelo: Modelo,
-    campo: 'valor' | 'metragem_media_m',
-  ) {
-    const input = event.currentTarget;
-    const original = Number(modelo[campo]);
-    const valor = Number(input.value);
-    const minimo = campo === 'valor' ? 0 : 0.01;
-    if (input.value.trim() === '' || !Number.isFinite(valor) || valor < minimo) {
-      input.value = String(original);
-      setErro(campo === 'valor' ? 'Informe um valor igual ou maior que zero.' : 'A metragem deve ser maior que zero.');
-      return;
-    }
-    if (valor === original) return;
-    const salvo = await atualizarCampoModelo(modelo, campo, Number(valor.toFixed(2)));
-    if (!salvo) input.value = String(original);
-  }
-
-  async function excluir(modelo: Modelo) {
-    if (!window.confirm(`Excluir o modelo “${modelo.nome}”?`)) return;
-    try { await request(`/api/gestao/modelos/${modelo.id}`, { method: 'DELETE' }); await carregar(); }
-    catch (e) { setErro(e instanceof Error ? e.message : 'Não foi possível excluir o modelo.'); }
-  }
-
-  return (
-    <section className="estoque-modelos" aria-label="Modelos cadastrados">
-      <div className="estoque-modelos__topo">
-        <h1 className="secao__titulo">Modelos</h1>
-        <button className="botao botao--pequeno estoque-modelos__cadastrar" onClick={() => abrir()}>+ Cadastrar</button>
-      </div>
-      {sucesso && <div className="alerta alerta--sucesso" role="status">{sucesso}<button className="estoque-modelos__fechar-erro" onClick={() => setSucesso('')} aria-label="Fechar mensagem">×</button></div>}
-      {erro && <div className="alerta alerta--erro" role="alert">{erro}<button className="estoque-modelos__fechar-erro" onClick={() => setErro('')} aria-label="Fechar erro">×</button></div>}
-      {carregando ? <p className="texto-suave">Carregando modelos…</p> : modelos.length === 0 ? <p className="texto-suave">Nenhum modelo cadastrado.</p> : (
-        <div className="estoque-modelos__lista">
-          {modelos.map((modelo) => (
-            <article className={`modelo-card${modelo.habilitado ? '' : ' modelo-card--inativo'}`} key={modelo.id}>
-              <img className="modelo-card__imagem" src={modelo.svg_url} alt={`Modelo ${modelo.nome}`} />
-              <div className="modelo-card__conteudo">
-                <div className="modelo-card__titulo">
-                  <strong>{modelo.nome}</strong>
-                  <button type="button" className="modelo-card__editar" onClick={() => abrir(modelo)} aria-label={`Editar nome e imagem de ${modelo.nome}`} title="Editar nome e imagem">✎</button>
-                  <label className="modelo-card__preco" aria-label={`Valor unitário de ${modelo.nome}`}>
-                    <span>R$</span>
-                    <input key={`${modelo.id}-valor-${modelo.valor}`} aria-label={`Valor unitário de ${modelo.nome}`} type="number" min="0" step="0.01" defaultValue={Number(modelo.valor).toFixed(2)} disabled={salvandoModelo !== null} onBlur={(event) => void salvarNumeroDoCard(event, modelo, 'valor')} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); event.currentTarget.blur(); } }} />
-                  </label>
-                </div>
-                <span className="modelo-card__tipo">♟ Modelo {modelo.parte === 'CIMA' ? 'Top' : 'Calcinha'}</span>
-                <label className="modelo-card__metragem">
-                  <span>Metros para a confecção:</span>
-                  <input key={`${modelo.id}-metros-${modelo.metragem_media_m}`} aria-label={`Metros para confecção de ${modelo.nome}`} type="number" min="0.01" step="0.01" defaultValue={Number(modelo.metragem_media_m).toFixed(2)} disabled={salvandoModelo !== null} onBlur={(event) => void salvarNumeroDoCard(event, modelo, 'metragem_media_m')} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); event.currentTarget.blur(); } }} />
-                </label>
-                <div className="modelo-card__base">
-                  <div className="modelo-card__stepper">
-                    <button type="button" aria-label={`Aumentar metragem de ${modelo.nome} em 1 metro`} title="Aumentar 1 metro" disabled={salvandoModelo !== null} onClick={() => void ajustarMetragem(modelo, 1)}>+</button>
-                    <button type="button" aria-label={`Diminuir metragem de ${modelo.nome} em 1 metro`} title="Diminuir 1 metro" disabled={salvandoModelo !== null || Number(modelo.metragem_media_m) - 1 < 0.01} onClick={() => void ajustarMetragem(modelo, -1)}>−</button>
-                  </div>
-                  <div className="modelo-card__acoes"><button className={`botao botao--pequeno ${modelo.habilitado ? 'botao--perigo' : 'botao--sucesso'}`} onClick={() => void habilitar(modelo)}>{modelo.habilitado ? 'Desabilitar' : 'Habilitar'}</button><button className="botao botao--pequeno botao--perigo" onClick={() => void excluir(modelo)}>× Excluir</button></div>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
-      {modal && <div className="modelo-modal-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) setModal(false); }}>
-        <form className="modelo-modal" onSubmit={salvar} aria-labelledby="modelo-modal-titulo">
-          <button className="modelo-modal__x" type="button" onClick={() => setModal(false)} aria-label="Fechar">×</button>
-          <h2 id="modelo-modal-titulo">{editando ? 'Editar Modelo' : 'Cadastrar Modelo'}</h2>
-          {erroModal && <div className="alerta alerta--erro modelo-modal__erro" role="alert">{erroModal}</div>}
-          <label className="campo"><span className="campo__rotulo">Nome do produto</span><input required maxLength={100} value={form.nome} placeholder="Nome" onChange={(e) => setForm({ ...form, nome: e.target.value })} /></label>
-          <label className="campo"><span className="campo__rotulo">Imagem do item (SVG):</span><input required={!form.svg_url} type="file" accept="image/svg+xml,.svg" onChange={(e) => void selecionarImagem(e.target.files?.[0])} /><small className="modelo-modal__ajuda">Selecione um arquivo .svg; PNG e JPG não são aceitos.</small>{form.svg_url && <img className="modelo-modal__preview" src={form.svg_url} alt="Prévia do modelo" />}</label>
-          <div className="modelo-modal__linha">
-            <label className="campo"><span className="campo__rotulo">Tipo:</span><select value={form.parte} onChange={(e) => setForm({ ...form, parte: e.target.value as ModeloForm['parte'] })}><option value="CIMA">Top</option><option value="BAIXO">Calcinha</option></select></label>
-            <label className="campo"><span className="campo__rotulo">Valor Unitário R$:</span><input required type="number" min="0" step="0.10" value={form.valor} onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })} /></label>
-          </div>
-          <label className="campo"><span className="campo__rotulo">Metros de tecido para o modelo (m):</span><input required type="number" min="0.01" step="0.01" value={form.metragem_media_m} onChange={(e) => setForm({ ...form, metragem_media_m: Number(e.target.value) })} /></label>
-          <div className="modelo-modal__acoes"><button className="botao botao--secundario" type="button" onClick={() => setModal(false)}>Cancelar</button><button className="botao" disabled={salvando}>{salvando ? 'Salvando…' : editando ? 'Salvar alterações' : 'Salvar Item'}</button></div>
-        </form>
-      </div>}
-    </section>
-  );
+  return null;
 }

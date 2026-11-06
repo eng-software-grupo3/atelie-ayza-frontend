@@ -214,10 +214,18 @@
   gap: 10px;
 }
 .lista-tecidos .tecido-card__nome {
+  flex: 1;
+  min-width: 0;
   font-size: 15px;
   font-weight: 500;
   line-height: 1.4;
   overflow-wrap: anywhere;
+}
+.lista-tecidos .tecido-card__valor-edicao {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
 }
 .lista-tecidos .tecido-card__preco,
 .lista-tecidos .tecido-card__quantidade {
@@ -239,6 +247,36 @@
 .lista-tecidos .tecido-card__acoes {
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.lista-tecidos .tecido-card__editar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  padding: 2px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #a46f5d;
+  font-size: 12px;
+  cursor: pointer;
+}
+.lista-tecidos .tecido-card__editar svg {
+  width: 20px;
+  height: 20px;
+}
+.lista-tecidos .tecido-card__editar:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.modal-cadastro .form-cadastro__ajuda {
+  font-size: 10px;
+  line-height: 1.4;
+  letter-spacing: 0;
 }
 .lista-tecidos .tecido-card__excluir {
   display: inline-flex;
