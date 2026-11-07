@@ -60,7 +60,7 @@ export async function apiFetch(
 ): Promise<Response> {
   const sessao = lerSessao();
   const cabecalhos = new Headers(opcoes.headers);
-  if (opcoes.body && !cabecalhos.has('Content-Type')) {
+  if (opcoes.body && !(opcoes.body instanceof FormData) && !cabecalhos.has('Content-Type')) {
     cabecalhos.set('Content-Type', 'application/json');
   }
   if (sessao) cabecalhos.set('Authorization', `Bearer ${sessao.accessToken}`);
