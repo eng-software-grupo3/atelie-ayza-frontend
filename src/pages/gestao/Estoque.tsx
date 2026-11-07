@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useCallback, useEffect, useState, type FocusEvent, type FormEvent } from 'react';
 import { apiJson } from '../../services/api.ts';
+import { urlApi } from '../../services/auth.ts';
 
 type Modelo = {
   id: string;
@@ -27,6 +28,14 @@ const categorias = [
 export function Estoque() {
   return (
     <main className="app-main">
+      <Outlet />
+    </main>
+  );
+}
+
+function EstoqueAbas({ onCadastrar }: { onCadastrar: () => void }) {
+  return (
+    <div className="estoque-categoria__barra">
       <nav className="nav-pill nav-pill--sub" aria-label="Categorias de estoque">
         {categorias.map((categoria) => (
           <NavLink
@@ -40,23 +49,350 @@ export function Estoque() {
           </NavLink>
         ))}
       </nav>
-
-      <Outlet />
-    </main>
+      <button className="botao botao--pequeno estoque-modelos__cadastrar" onClick={onCadastrar}>+ Cadastrar</button>
+    </div>
   );
 }
 
-/**
- * Subcategorias do estoque.
- *
- * O conteúdo destas telas será implementado em uma etapa futura.
- */
 export function EstoqueTecidos() {
-  return null;
+  return <EstoqueItens tipo="tecidos" />;
 }
 
 export function EstoqueAderecos() {
-  return null;
+  return <EstoqueItens tipo="aderecos" />;
+}
+
+type TipoEstoque = 'tecidos' | 'aderecos';
+
+type TecidoApi = {
+  id: string;
+  nome: string;
+  foto: string | null;
+  preco_metro: number;
+  quantidade_m: number;
+  desabilitado: boolean;
+};
+
+type AderecoApi = {
+  id: string;
+  nome: string;
+  foto: string | null;
+  preco: number;
+  quantidade: number;
+  desabilitado: boolean;
+};
+
+type ItemApi = TecidoApi | AderecoApi;
+
+type ItemEstoque = {
+  id: string;
+  nome: string;
+  foto: string | null;
+  valor: number;
+  quantidade: number;
+  desabilitado: boolean;
+};
+
+type FormItemEstoque = { nome: string; valor: string; quantidade: string };
+
+function adaptarItem(item: ItemApi): ItemEstoque {
+  return {
+    id: item.id,
+    nome: item.nome,
+    foto: item.foto,
+    valor: 'preco_metro' in item ? item.preco_metro : item.preco,
+    quantidade: 'quantidade_m' in item ? item.quantidade_m : item.quantidade,
+    desabilitado: item.desabilitado,
+  };
+}
+
+function EstoqueItens({ tipo }: { tipo: TipoEstoque }) {
+  const tecidos = tipo === 'tecidos';
+  const endpoint = `/api/gestao/${tipo}`;
+  const categoria = tecidos ? 'Tecido' : 'Adereço';
+  const campoPreco = tecidos ? 'preco_metro' : 'preco';
+  const campoQuantidade = tecidos ? 'quantidade_m' : 'quantidade';
+  const unidade = tecidos ? 'Metros atual:' : 'Qtd. atual:';
+  const [itens, setItens] = useState<ItemEstoque[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState('');
+  const [erroModal, setErroModal] = useState('');
+  const [sucesso, setSucesso] = useState('');
+  const [modal, setModal] = useState(false);
+  const [editando, setEditando] = useState<ItemEstoque | null>(null);
+  const [itemParaExcluir, setItemParaExcluir] = useState<ItemEstoque | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
+  const [form, setForm] = useState<FormItemEstoque>({ nome: '', valor: '', quantidade: '' });
+  const [foto, setFoto] = useState<File | null>(null);
+  const [fotoPreview, setFotoPreview] = useState('');
+  const [salvando, setSalvando] = useState(false);
+  const [salvandoItem, setSalvandoItem] = useState<string | null>(null);
+
+  const carregar = useCallback(async () => {
+    try {
+      const resposta = await request<ItemApi[]>(endpoint);
+      setItens(resposta.map(adaptarItem));
+      setErro('');
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : `Não foi possível carregar ${categoria.toLowerCase()}s.`);
+    } finally {
+      setCarregando(false);
+    }
+  }, [categoria, endpoint]);
+
+  /* oxlint-disable react(set-state-in-effect) -- loading remote data is the effect's purpose */
+  useEffect(() => { void carregar(); }, [carregar]);
+  /* oxlint-enable react(set-state-in-effect) */
+
+  useEffect(() => {
+    if (!fotoPreview.startsWith('blob:')) return;
+    return () => URL.revokeObjectURL(fotoPreview);
+  }, [fotoPreview]);
+
+  function abrir(item?: ItemEstoque) {
+    setErroModal('');
+    setErro('');
+    setSucesso('');
+    setEditando(item ?? null);
+    setForm(item
+      ? { nome: item.nome, valor: String(item.valor), quantidade: String(item.quantidade) }
+      : { nome: '', valor: '', quantidade: '' });
+    setFoto(null);
+    setFotoPreview(item?.foto ? urlApi(item.foto) : '');
+    setModal(true);
+  }
+
+  function selecionarFoto(file?: File) {
+    if (!file) return;
+    setErroModal('');
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setErroModal('A foto deve estar no formato JPG, PNG ou WebP.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setErroModal('A foto deve ter no máximo 5 MiB.');
+      return;
+    }
+    setFoto(file);
+    setFotoPreview(URL.createObjectURL(file));
+  }
+
+  async function salvar(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setErroModal('');
+    if (!editando && !foto) {
+      setErroModal('Escolha uma foto para o item.');
+      return;
+    }
+    setSalvando(true);
+    const body = new FormData();
+    body.append('nome', form.nome.trim());
+    body.append(campoPreco, String(Number(form.valor)));
+    if (!editando) body.append(campoQuantidade, String(Number(form.quantidade)));
+    if (foto) body.append('foto', foto);
+    try {
+      await request<ItemApi>(editando ? `${endpoint}/${editando.id}` : endpoint, {
+        method: editando ? 'PATCH' : 'POST',
+        body,
+      });
+      setModal(false);
+      setSucesso(editando ? `${categoria} atualizado com sucesso.` : `${categoria} cadastrado com sucesso.`);
+      await carregar();
+    } catch (e) {
+      setErroModal(e instanceof Error ? e.message : `Não foi possível salvar ${categoria.toLowerCase()}.`);
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  async function atualizarCampo(
+    item: ItemEstoque,
+    valor: number,
+  ): Promise<boolean> {
+    if (salvandoItem || !Number.isFinite(valor)) return false;
+    setSalvandoItem(item.id);
+    setErro('');
+    setSucesso('');
+    try {
+      const atualizado = await request<ItemApi>(`${endpoint}/${item.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ [campoPreco]: valor }),
+      });
+      const itemAtualizado = adaptarItem(atualizado);
+      setItens((atuais) => atuais.map((atual) => atual.id === item.id ? itemAtualizado : atual));
+      return true;
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : `Não foi possível atualizar ${categoria.toLowerCase()}.`);
+      return false;
+    } finally {
+      setSalvandoItem(null);
+    }
+  }
+
+  async function salvarNumeroDoCard(
+    event: FocusEvent<HTMLInputElement>,
+    item: ItemEstoque,
+    campo: 'valor' | 'quantidade',
+  ) {
+    const input = event.currentTarget;
+    const original = Number(item[campo]);
+    const valor = Number(input.value);
+    const quantidadeInvalida = campo === 'quantidade' && !tecidos && !Number.isInteger(valor);
+    if (input.value.trim() === '' || !Number.isFinite(valor) || valor < 0 || quantidadeInvalida) {
+      input.value = String(original);
+      setErro(campo === 'valor'
+        ? 'O valor deve ser igual ou maior que zero.'
+        : tecidos ? 'A metragem não pode ser negativa.' : 'A quantidade de adereços deve ser um número inteiro igual ou maior que zero.');
+      return;
+    }
+    if (valor === original) return;
+    const salvo = campo === 'valor'
+      ? await atualizarCampo(item, Number(valor.toFixed(2)))
+      : await corrigirQuantidade(item, Number(valor.toFixed(2)));
+    if (!salvo) input.value = String(original);
+  }
+
+  async function enviarMovimentacao(
+    item: ItemEstoque,
+    body: { tipo: 'entrada' | 'saida'; quantidade: number } | { tipo: 'correcao'; quantidade_atual: number },
+  ): Promise<boolean> {
+    if (salvandoItem) return false;
+    setSalvandoItem(item.id);
+    setErro('');
+    setSucesso('');
+    try {
+      await request<unknown>(`/api/gestao/estoque/${tipo}/${item.id}/movimentacoes`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+      await carregar();
+      return true;
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : `Não foi possível atualizar o estoque de ${item.nome}.`);
+      return false;
+    } finally {
+      setSalvandoItem(null);
+    }
+  }
+
+  async function corrigirQuantidade(item: ItemEstoque, quantidadeAtual: number) {
+    return enviarMovimentacao(item, { tipo: 'correcao', quantidade_atual: quantidadeAtual });
+  }
+
+  async function ajustarQuantidade(item: ItemEstoque, direcao: 'entrada' | 'saida') {
+    const incremento = 1;
+    if (direcao === 'saida' && item.quantidade < incremento) return;
+    await enviarMovimentacao(item, { tipo: direcao, quantidade: incremento });
+  }
+
+  async function alternarStatus(item: ItemEstoque) {
+    if (salvandoItem) return;
+    setSalvandoItem(item.id);
+    setErro('');
+    setSucesso('');
+    try {
+      const atualizado = await request<ItemApi>(`${endpoint}/${item.id}/habilitado`, {
+        method: 'PATCH',
+        body: JSON.stringify({ habilitado: item.desabilitado }),
+      });
+      const itemAtualizado = adaptarItem(atualizado);
+      setItens((atuais) => atuais.map((atual) => atual.id === item.id ? itemAtualizado : atual));
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não foi possível alterar o status.');
+    } finally {
+      setSalvandoItem(null);
+    }
+  }
+
+  async function excluir() {
+    if (!itemParaExcluir) return;
+    setExcluindo(true);
+    try {
+      await request(`${endpoint}/${itemParaExcluir.id}`, { method: 'DELETE' });
+      setItens((atuais) => atuais.filter((atual) => atual.id !== itemParaExcluir.id));
+      setItemParaExcluir(null);
+      setSucesso(`${categoria} excluído com sucesso.`);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : `Não foi possível excluir ${categoria.toLowerCase()}.`);
+      setItemParaExcluir(null);
+    } finally {
+      setExcluindo(false);
+    }
+  }
+
+  return (
+    <section className="estoque-modelos" aria-label={`${categoria}s cadastrados`}>
+      <EstoqueAbas onCadastrar={() => abrir()} />
+      {sucesso && <div className="alerta alerta--sucesso" role="status">{sucesso}<button className="estoque-modelos__fechar-erro" onClick={() => setSucesso('')} aria-label="Fechar mensagem">×</button></div>}
+      {erro && <div className="alerta alerta--erro" role="alert">{erro}<button className="estoque-modelos__fechar-erro" onClick={() => setErro('')} aria-label="Fechar erro">×</button></div>}
+      {carregando ? <p className="texto-suave">Carregando {categoria.toLowerCase()}s…</p> : itens.length === 0 ? <p className="texto-suave">Nenhum item cadastrado.</p> : (
+        <div className="estoque-modelos__lista">
+          {itens.map((item) => (
+            <article className={`modelo-card${item.desabilitado ? ' modelo-card--inativo' : ''}`} key={item.id}>
+              {item.foto
+                ? <img className="modelo-card__imagem" src={urlApi(item.foto)} alt={item.nome} />
+                : <div className="modelo-card__imagem modelo-card__imagem--vazia" aria-label="Sem foto">Sem foto</div>}
+              <div className="modelo-card__conteudo">
+                <div className="modelo-card__titulo">
+                  <strong>{item.nome}</strong>
+                  <button type="button" className="modelo-card__editar" onClick={() => abrir(item)} aria-label={`Editar ${item.nome}`} title={`Editar ${item.nome}`}>✎</button>
+                  <label className="modelo-card__preco" aria-label={`${tecidos ? 'Preço por metro' : 'Preço'} de ${item.nome}`}>
+                    <span>R$</span>
+                    <input key={`${item.id}-valor-${item.valor}`} type="number" min="0" step="0.01" defaultValue={Number(item.valor).toFixed(2)} disabled={salvandoItem !== null} onBlur={(event) => void salvarNumeroDoCard(event, item, 'valor')} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); event.currentTarget.blur(); } }} />
+                  </label>
+                </div>
+                {!tecidos && <span className="modelo-card__tipo">♟ Adereço</span>}
+                <label className="modelo-card__metragem">
+                  <span>{unidade}</span>
+                  <input key={`${item.id}-quantidade-${item.quantidade}`} className="estoque-item__quantidade" aria-label={`${unidade} ${item.nome}`} type="number" min="0" step={tecidos ? '0.01' : '1'} defaultValue={Number(item.quantidade).toFixed(tecidos ? 2 : 0)} disabled={salvandoItem !== null} onBlur={(event) => void salvarNumeroDoCard(event, item, 'quantidade')} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); event.currentTarget.blur(); } }} />
+                </label>
+                <div className="modelo-card__base">
+                  <div className="modelo-card__stepper">
+                    <button type="button" aria-label={`Adicionar ${tecidos ? '1 metro ao estoque de' : '1 unidade ao estoque de'} ${item.nome}`} title="Adicionar ao estoque" disabled={salvandoItem !== null} onClick={() => void ajustarQuantidade(item, 'entrada')}>+</button>
+                    <button type="button" aria-label={`Retirar ${tecidos ? '1 metro do estoque de' : '1 unidade do estoque de'} ${item.nome}`} title="Retirar do estoque" disabled={salvandoItem !== null || item.quantidade < 1} onClick={() => void ajustarQuantidade(item, 'saida')}>−</button>
+                  </div>
+                  <div className="modelo-card__acoes">
+                    <button type="button" className={`botao botao--pequeno ${item.desabilitado ? 'botao--sucesso' : 'botao--perigo'}`} disabled={salvandoItem !== null} onClick={() => void alternarStatus(item)}>{item.desabilitado ? 'Habilitar' : 'Desabilitar'}</button>
+                    <button type="button" className="botao botao--pequeno botao--perigo" onClick={() => setItemParaExcluir(item)}>× Excluir</button>
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+      {modal && <div className="modelo-modal-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) setModal(false); }}>
+        <form className="modelo-modal" onSubmit={salvar} aria-labelledby="estoque-item-modal-titulo">
+          <button className="modelo-modal__x" type="button" onClick={() => setModal(false)} aria-label="Fechar">×</button>
+          <h2 id="estoque-item-modal-titulo">{editando ? `Editar ${categoria}` : `Cadastrar ${categoria}`}</h2>
+          {erroModal && <div className="alerta alerta--erro modelo-modal__erro" role="alert">{erroModal}</div>}
+          <label className="campo"><span className="campo__rotulo">Nome do item</span><input required maxLength={100} value={form.nome} placeholder="Nome" onChange={(event) => setForm({ ...form, nome: event.target.value })} /></label>
+          <label className="campo">
+            <span className="campo__rotulo">{tecidos ? 'Imagem do item (Estampa):' : 'Imagem do item:'}</span>
+            <input required={!editando} type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" onChange={(event) => selecionarFoto(event.target.files?.[0])} />
+            <small className="modelo-modal__ajuda">JPG, PNG ou WebP; até 5 MiB.</small>
+            {fotoPreview && <img className="modelo-modal__preview" src={fotoPreview} alt={`Prévia de ${categoria.toLowerCase()}`} />}
+          </label>
+          <div className="modelo-modal__linha">
+            <label className="campo"><span className="campo__rotulo">Valor R$:</span><input required type="number" min="0" step="0.01" value={form.valor} placeholder="R$ 0,00" onChange={(event) => setForm({ ...form, valor: event.target.value })} /></label>
+            {!editando && <label className="campo"><span className="campo__rotulo">{tecidos ? 'Metros atual:' : 'Quantidade atual:'}</span><input required type="number" min="0" step={tecidos ? '0.01' : '1'} value={form.quantidade} placeholder={tecidos ? 'Ex. 42,20' : 'Ex. 20'} onChange={(event) => setForm({ ...form, quantidade: event.target.value })} /></label>}
+          </div>
+          <div className="modelo-modal__acoes"><button className="botao botao--secundario" type="button" onClick={() => setModal(false)}>Cancelar</button><button className="botao" disabled={salvando}>{salvando ? 'Salvando…' : editando ? 'Salvar alterações' : 'Salvar item'}</button></div>
+        </form>
+      </div>}
+      {itemParaExcluir && <div className="estoque-confirmacao__overlay" onMouseDown={(event) => { if (event.target === event.currentTarget && !excluindo) setItemParaExcluir(null); }}>
+        <section className="estoque-confirmacao" role="alertdialog" aria-modal="true" aria-labelledby="estoque-confirmacao-titulo" aria-describedby="estoque-confirmacao-descricao">
+          <button type="button" className="estoque-confirmacao__fechar" aria-label="Fechar" disabled={excluindo} onClick={() => setItemParaExcluir(null)}>×</button>
+          <h2 id="estoque-confirmacao-titulo" className="apenas-leitor">Confirmar exclusão</h2>
+          <p id="estoque-confirmacao-descricao">Tem certeza que deseja excluir o item do seu estoque? Ele deixará de estar disponível para os clientes.</p>
+          <div className="estoque-confirmacao__acoes">
+            <button type="button" disabled={excluindo} onClick={() => setItemParaExcluir(null)}>Cancelar</button>
+            <button type="button" disabled={excluindo} onClick={() => void excluir()}>{excluindo ? 'Excluindo…' : 'Excluir'}</button>
+          </div>
+        </section>
+      </div>}
+    </section>
+  );
 }
 
 export function EstoqueModelos() {
@@ -67,6 +403,8 @@ export function EstoqueModelos() {
   const [sucesso, setSucesso] = useState('');
   const [modal, setModal] = useState(false);
   const [editando, setEditando] = useState<Modelo | null>(null);
+  const [modeloParaExcluir, setModeloParaExcluir] = useState<Modelo | null>(null);
+  const [excluindoModelo, setExcluindoModelo] = useState(false);
   const [form, setForm] = useState<ModeloForm>(vazio);
   const [salvando, setSalvando] = useState(false);
   const [salvandoModelo, setSalvandoModelo] = useState<string | null>(null);
@@ -192,18 +530,25 @@ export function EstoqueModelos() {
     if (!salvo) input.value = String(original);
   }
 
-  async function excluir(modelo: Modelo) {
-    if (!window.confirm(`Excluir o modelo “${modelo.nome}”?`)) return;
-    try { await request(`/api/gestao/modelos/${modelo.id}`, { method: 'DELETE' }); await carregar(); }
-    catch (e) { setErro(e instanceof Error ? e.message : 'Não foi possível excluir o modelo.'); }
+  async function excluir() {
+    if (!modeloParaExcluir) return;
+    setExcluindoModelo(true);
+    try {
+      await request(`/api/gestao/modelos/${modeloParaExcluir.id}`, { method: 'DELETE' });
+      setModelos((atuais) => atuais.filter((atual) => atual.id !== modeloParaExcluir.id));
+      setModeloParaExcluir(null);
+      setSucesso('Modelo excluído com sucesso.');
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não foi possível excluir o modelo.');
+      setModeloParaExcluir(null);
+    } finally {
+      setExcluindoModelo(false);
+    }
   }
 
   return (
     <section className="estoque-modelos" aria-label="Modelos cadastrados">
-      <div className="estoque-modelos__topo">
-        <h1 className="secao__titulo">Modelos</h1>
-        <button className="botao botao--pequeno estoque-modelos__cadastrar" onClick={() => abrir()}>+ Cadastrar</button>
-      </div>
+      <EstoqueAbas onCadastrar={() => abrir()} />
       {sucesso && <div className="alerta alerta--sucesso" role="status">{sucesso}<button className="estoque-modelos__fechar-erro" onClick={() => setSucesso('')} aria-label="Fechar mensagem">×</button></div>}
       {erro && <div className="alerta alerta--erro" role="alert">{erro}<button className="estoque-modelos__fechar-erro" onClick={() => setErro('')} aria-label="Fechar erro">×</button></div>}
       {carregando ? <p className="texto-suave">Carregando modelos…</p> : modelos.length === 0 ? <p className="texto-suave">Nenhum modelo cadastrado.</p> : (
@@ -230,7 +575,7 @@ export function EstoqueModelos() {
                     <button type="button" aria-label={`Aumentar metragem de ${modelo.nome} em 1 metro`} title="Aumentar 1 metro" disabled={salvandoModelo !== null} onClick={() => void ajustarMetragem(modelo, 1)}>+</button>
                     <button type="button" aria-label={`Diminuir metragem de ${modelo.nome} em 1 metro`} title="Diminuir 1 metro" disabled={salvandoModelo !== null || Number(modelo.metragem_media_m) - 1 < 0.01} onClick={() => void ajustarMetragem(modelo, -1)}>−</button>
                   </div>
-                  <div className="modelo-card__acoes"><button className={`botao botao--pequeno ${modelo.habilitado ? 'botao--perigo' : 'botao--sucesso'}`} onClick={() => void habilitar(modelo)}>{modelo.habilitado ? 'Desabilitar' : 'Habilitar'}</button><button className="botao botao--pequeno botao--perigo" onClick={() => void excluir(modelo)}>× Excluir</button></div>
+                  <div className="modelo-card__acoes"><button className={`botao botao--pequeno ${modelo.habilitado ? 'botao--perigo' : 'botao--sucesso'}`} onClick={() => void habilitar(modelo)}>{modelo.habilitado ? 'Desabilitar' : 'Habilitar'}</button><button className="botao botao--pequeno botao--perigo" onClick={() => setModeloParaExcluir(modelo)}>× Excluir</button></div>
                 </div>
               </div>
             </article>
@@ -251,6 +596,17 @@ export function EstoqueModelos() {
           <label className="campo"><span className="campo__rotulo">Metros de tecido para o modelo (m):</span><input required type="number" min="0.01" step="0.01" value={form.metragem_media_m} onChange={(e) => setForm({ ...form, metragem_media_m: Number(e.target.value) })} /></label>
           <div className="modelo-modal__acoes"><button className="botao botao--secundario" type="button" onClick={() => setModal(false)}>Cancelar</button><button className="botao" disabled={salvando}>{salvando ? 'Salvando…' : editando ? 'Salvar alterações' : 'Salvar Item'}</button></div>
         </form>
+      </div>}
+      {modeloParaExcluir && <div className="estoque-confirmacao__overlay" onMouseDown={(event) => { if (event.target === event.currentTarget && !excluindoModelo) setModeloParaExcluir(null); }}>
+        <section className="estoque-confirmacao" role="alertdialog" aria-modal="true" aria-labelledby="modelo-exclusao-titulo" aria-describedby="modelo-exclusao-descricao">
+          <button type="button" className="estoque-confirmacao__fechar" aria-label="Fechar" disabled={excluindoModelo} onClick={() => setModeloParaExcluir(null)}>×</button>
+          <h2 id="modelo-exclusao-titulo" className="apenas-leitor">Confirmar exclusão do modelo</h2>
+          <p id="modelo-exclusao-descricao">Tem certeza que deseja excluir o item do seu estoque? Ele deixará de estar disponível para os clientes.</p>
+          <div className="estoque-confirmacao__acoes">
+            <button type="button" disabled={excluindoModelo} onClick={() => setModeloParaExcluir(null)}>Cancelar</button>
+            <button type="button" disabled={excluindoModelo} onClick={() => void excluir()}>{excluindoModelo ? 'Excluindo…' : 'Excluir'}</button>
+          </div>
+        </section>
       </div>}
     </section>
   );
