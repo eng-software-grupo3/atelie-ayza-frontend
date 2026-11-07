@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useCallback, useEffect, useState, type FocusEvent, type FormEvent } from 'react';
+import { apiJson } from '../../services/api.ts';
 
 type Modelo = {
   id: string;
@@ -13,23 +14,7 @@ type Modelo = {
 
 type ModeloForm = Omit<Modelo, 'id' | 'habilitado'>;
 
-const apiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
-
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const headers = new Headers(init?.headers);
-  if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
-  const response = await fetch(`${apiUrl}${path}`, {
-    ...init,
-    headers,
-  });
-  if (!response.ok) {
-    const body = await response.json().catch(() => null) as { message?: string | string[] } | null;
-    const message = Array.isArray(body?.message) ? body.message.join(', ') : body?.message;
-    throw new Error(message || `Erro ${response.status} ao comunicar com a API.`);
-  }
-  if (response.status === 204) return undefined as T;
-  return response.json() as Promise<T>;
-}
+const request = apiJson;
 
 const vazio: ModeloForm = { nome: '', parte: 'CIMA', valor: 0, metragem_media_m: 2.5, svg_url: '' };
 
