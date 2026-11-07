@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { useCallback, useEffect, useState, type FocusEvent, type FormEvent } from 'react';
 import { apiJson } from '../../services/api.ts';
 import { urlApi } from '../../services/auth.ts';
+import '../../styles/estoque-tecidos.css';
 
 type Modelo = {
   id: string;
@@ -27,7 +28,7 @@ const categorias = [
 
 export function Estoque() {
   return (
-    <main className="app-main">
+    <main className="app-main estoque-pagina">
       <Outlet />
     </main>
   );
@@ -35,22 +36,24 @@ export function Estoque() {
 
 function EstoqueAbas({ onCadastrar }: { onCadastrar: () => void }) {
   return (
-    <div className="estoque-categoria__barra">
-      <nav className="nav-pill nav-pill--sub" aria-label="Categorias de estoque">
-        {categorias.map((categoria) => (
-          <NavLink
-            key={categoria.to}
-            to={categoria.to}
-            className={({ isActive }) =>
-              isActive ? 'nav-pill__item nav-pill__item--ativo' : 'nav-pill__item'
-            }
-          >
-            {categoria.label}
-          </NavLink>
-        ))}
-      </nav>
-      <button className="botao botao--pequeno estoque-modelos__cadastrar" onClick={onCadastrar}>+ Cadastrar</button>
-    </div>
+    <nav className="estoque-categorias" aria-label="Categorias de estoque">
+      {categorias.map((categoria) => (
+        <NavLink
+          key={categoria.to}
+          to={categoria.to}
+          className={({ isActive }) =>
+            isActive
+              ? 'estoque-categorias__aba estoque-categorias__aba--ativa'
+              : 'estoque-categorias__aba'
+          }
+        >
+          {categoria.label}
+        </NavLink>
+      ))}
+      <button type="button" className="botao--cadastro" onClick={onCadastrar}>
+        +Cadastrar
+      </button>
+    </nav>
   );
 }
 

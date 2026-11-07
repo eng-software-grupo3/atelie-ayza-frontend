@@ -1265,7 +1265,10 @@ a.botao--secundario:hover {
   text-align: center;
   cursor: pointer;
   touch-action: manipulation;
-  transition: color .15s ease;
+  transition:
+    color .15s ease,
+    background-color .15s ease,
+    transform .15s ease;
 }
 
 .modelo-card__stepper button:hover:not(:disabled) {
