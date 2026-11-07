@@ -1031,10 +1031,28 @@ a.botao--secundario:hover {
   gap: 12px;
 }
 
-.estoque-modelos__topo {
+.estoque-modelos input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.estoque-modelos input[type='number']::-webkit-inner-spin-button,
+.estoque-modelos input[type='number']::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
+.estoque-categoria__barra {
   display: flex;
+  width: 100%;
   align-items: center;
-  justify-content: space-between;
+  gap: 8px;
+}
+
+.estoque-categoria__barra .nav-pill--sub {
+  min-width: 0;
+  max-width: none;
+  flex: 1;
 }
 
 .estoque-modelos__cadastrar {
@@ -1084,6 +1102,13 @@ a.botao--secundario:hover {
   background: white;
   object-fit: contain;
   object-position: center;
+}
+
+.modelo-card__imagem--vazia {
+  display: grid;
+  place-items: center;
+  color: var(--cor-texto-suave);
+  font-size: 9px;
 }
 
 .modelo-card__conteudo {
@@ -1191,6 +1216,17 @@ a.botao--secundario:hover {
   font-size: 12px;
 }
 
+.estoque-item__quantidade {
+  min-width: 50px;
+  height: 21px;
+  padding: 1px 4px;
+  border: 1px solid #d9d9d9;
+  border-radius: 5px;
+  background: white;
+  color: #171717;
+  text-align: center;
+}
+
 .modelo-card__metragem input:focus {
   outline: 1px solid var(--cor-destaque);
 }
@@ -1218,23 +1254,22 @@ a.botao--secundario:hover {
   align-items: center;
   justify-content: center;
   padding: 0 0 1px;
-  border: 1px solid #9b6557;
-  border-radius: 6px;
-  background: var(--cor-destaque);
-  box-shadow: 0 1px 2px rgb(75 48 39 / 18%);
-  color: var(--cor-destaque-texto);
-  font-size: 16px;
-  font-weight: 600;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--cor-texto);
+  font-size: 20px;
+  font-weight: 400;
   line-height: 1;
   text-align: center;
   cursor: pointer;
   touch-action: manipulation;
-  transition: background-color .15s ease, transform .15s ease;
+  transition: color .15s ease;
 }
 
 .modelo-card__stepper button:hover:not(:disabled) {
-  transform: translateY(-1px);
-  background: #9d6758;
+  color: var(--cor-destaque);
 }
 
 .modelo-card__stepper button:focus-visible {
@@ -1243,9 +1278,6 @@ a.botao--secundario:hover {
 }
 
 .modelo-card__stepper button:disabled {
-  border-color: #c4b8b4;
-  background: #ddd5d2;
-  box-shadow: none;
   color: #8c817d;
   cursor: not-allowed;
 }
@@ -1368,6 +1400,67 @@ a.botao--secundario:hover {
   flex: 1;
   padding-inline: 5px;
   font-size: 14px;
+}
+
+.estoque-confirmacao__overlay {
+  position: fixed;
+  z-index: 21;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(0 0 0 / 28%);
+}
+
+.estoque-confirmacao {
+  position: relative;
+  width: min(100%, 366px);
+  padding: 24px 22px 10px;
+  border: 1px solid #222;
+  border-radius: 9px;
+  background: #fff;
+  color: #111;
+  text-align: center;
+}
+
+.estoque-confirmacao__fechar {
+  position: absolute;
+  top: 2px;
+  right: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #111;
+  font-size: 25px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.estoque-confirmacao p {
+  max-width: 325px;
+  margin: 0 auto 8px;
+  font-size: 15px;
+  line-height: 1.15;
+}
+
+.estoque-confirmacao__acoes {
+  display: flex;
+  gap: 12px;
+}
+
+.estoque-confirmacao__acoes button {
+  min-height: 33px;
+  flex: 1;
+  border: 0;
+  border-radius: 7px;
+  background: #d9d9d9;
+  color: #171717;
+  cursor: pointer;
+}
+
+.estoque-confirmacao__acoes button:disabled,
+.estoque-confirmacao__fechar:disabled {
+  cursor: wait;
 }
 
 @media (max-width: 350px) {
