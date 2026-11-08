@@ -394,7 +394,7 @@ function EstoqueItens({ tipo }: { tipo: TipoEstoque }) {
                   <input key={`${item.id}-quantidade-${item.quantidade}`} className="estoque-item__quantidade" aria-label={`${unidade} ${item.nome}`} type="number" min="0" step={tecidos ? '0.01' : '1'} defaultValue={Number(item.quantidade).toFixed(tecidos ? 2 : 0)} disabled={salvandoItem !== null} onBlur={(event) => void salvarNumeroDoCard(event, item, 'quantidade')} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); event.currentTarget.blur(); } }} />
                 </label>
                 <div className="modelo-card__base">
-                  <div className="modelo-card__stepper">
+                  <div className="modelo-card__stepper estoque-item__stepper">
                     <button type="button" aria-label={`Adicionar ${tecidos ? '1 metro ao estoque de' : '1 unidade ao estoque de'} ${item.nome}`} title="Adicionar ao estoque" disabled={salvandoItem !== null} onClick={() => void ajustarQuantidade(item, 'entrada')}>+</button>
                     <button type="button" aria-label={`Retirar ${tecidos ? '1 metro do estoque de' : '1 unidade do estoque de'} ${item.nome}`} title="Retirar do estoque" disabled={salvandoItem !== null || item.quantidade < 1} onClick={() => void ajustarQuantidade(item, 'saida')}>−</button>
                   </div>
