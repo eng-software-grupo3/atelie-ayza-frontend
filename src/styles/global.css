@@ -1254,25 +1254,23 @@ a.botao--secundario:hover {
   align-items: center;
   justify-content: center;
   padding: 0 0 1px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  color: var(--cor-texto);
-  font-size: 20px;
-  font-weight: 400;
+  border: 1px solid #9b6557;
+  border-radius: 6px;
+  background: var(--cor-destaque);
+  box-shadow: 0 1px 2px rgb(75 48 39 / 18%);
+  color: var(--cor-destaque-texto);
+  font-size: 16px;
+  font-weight: 600;
   line-height: 1;
   text-align: center;
   cursor: pointer;
   touch-action: manipulation;
-  transition:
-    color .15s ease,
-    background-color .15s ease,
-    transform .15s ease;
+  transition: background-color .15s ease, transform .15s ease;
 }
 
 .modelo-card__stepper button:hover:not(:disabled) {
-  color: var(--cor-destaque);
+  transform: translateY(-1px);
+  background: #9d6758;
 }
 
 .modelo-card__stepper button:focus-visible {
@@ -1281,36 +1279,6 @@ a.botao--secundario:hover {
 }
 
 .modelo-card__stepper button:disabled {
-  color: #8c817d;
-  cursor: not-allowed;
-}
-
-/* Controles de quantidade do estoque seguem o acabamento acolchoado do stepper de referência. */
-.estoque-item__stepper button {
-  width: 28px;
-  height: 28px;
-  padding: 0 0 1px;
-  border: 1px solid #9b6557;
-  border-radius: 6px;
-  background: var(--cor-destaque);
-  box-shadow: 0 1px 2px rgb(75 48 39 / 18%);
-  color: var(--cor-destaque-texto);
-  font-size: 16px;
-  font-weight: 600;
-  transition: background-color .15s ease, transform .15s ease;
-}
-
-.estoque-item__stepper button:hover:not(:disabled) {
-  transform: translateY(-1px);
-  background: #9d6758;
-}
-
-.estoque-item__stepper button:focus-visible {
-  outline: 2px solid var(--cor-verde);
-  outline-offset: 2px;
-}
-
-.estoque-item__stepper button:disabled {
   border-color: #c4b8b4;
   background: #ddd5d2;
   box-shadow: none;
