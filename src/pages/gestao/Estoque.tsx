@@ -2,7 +2,6 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { useCallback, useEffect, useRef, useState, type FocusEvent, type FormEvent } from 'react';
 import { apiJson } from '../../services/api.ts';
 import { urlApi } from '../../services/auth.ts';
-import '../../styles/estoque-tecidos.css';
 
 type Modelo = {
   id: string;
