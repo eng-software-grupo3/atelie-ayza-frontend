@@ -4,11 +4,10 @@
   align-items: center;
   gap: 5px;
   width: 100%;
-  max-width: 520px;
 }
 .estoque-categorias .estoque-categorias__aba {
   display: flex;
-  flex: 1;
+  flex: 0 1 150px;
   align-items: center;
   justify-content: center;
   min-width: 0;
@@ -27,7 +26,7 @@
 }
 .estoque-categorias .botao--cadastro {
   flex-shrink: 0;
-  margin-left: 18px;
+  margin-left: auto;
   padding: 7px 10px;
   border: 1px solid #b9a894;
   border-radius: 11px;
@@ -43,11 +42,12 @@
 }
 @media (max-width: 479px) {
   .estoque-categorias .estoque-categorias__aba {
+    flex: 1 1 0;
     padding: 6px 5px;
     font-size: 11px;
   }
   .estoque-categorias .botao--cadastro {
-    margin-left: 8px;
+    margin-left: 3px;
     padding: 7px;
     font-size: 10px;
   }

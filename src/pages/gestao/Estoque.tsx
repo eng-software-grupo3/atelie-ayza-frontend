@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { useCallback, useEffect, useState, type FocusEvent, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FocusEvent, type FormEvent } from 'react';
 import { apiJson } from '../../services/api.ts';
 import { urlApi } from '../../services/auth.ts';
 import '../../styles/estoque-tecidos.css';
@@ -51,7 +51,7 @@ function EstoqueAbas({ onCadastrar }: { onCadastrar: () => void }) {
         </NavLink>
       ))}
       <button type="button" className="botao--cadastro" onClick={onCadastrar}>
-        +Cadastrar
+        + Cadastrar
       </button>
     </nav>
   );
@@ -72,7 +72,8 @@ type TecidoApi = {
   nome: string;
   foto: string | null;
   preco_metro: number;
-  quantidade_m: number;
+  quantidade?: number;
+  quantidade_m?: number;
   desabilitado: boolean;
 };
 
@@ -99,12 +100,17 @@ type ItemEstoque = {
 type FormItemEstoque = { nome: string; valor: string; quantidade: string };
 
 function adaptarItem(item: ItemApi): ItemEstoque {
+  const quantidade = item.quantidade ?? ('quantidade_m' in item ? item.quantidade_m : undefined);
+  if (quantidade === undefined) {
+    throw new Error('A API retornou um item sem a quantidade atual.');
+  }
+
   return {
     id: item.id,
     nome: item.nome,
     foto: item.foto,
     valor: 'preco_metro' in item ? item.preco_metro : item.preco,
-    quantidade: 'quantidade_m' in item ? item.quantidade_m : item.quantidade,
+    quantidade,
     desabilitado: item.desabilitado,
   };
 }
@@ -114,7 +120,7 @@ function EstoqueItens({ tipo }: { tipo: TipoEstoque }) {
   const endpoint = `/api/gestao/${tipo}`;
   const categoria = tecidos ? 'Tecido' : 'Adereço';
   const campoPreco = tecidos ? 'preco_metro' : 'preco';
-  const campoQuantidade = tecidos ? 'quantidade_m' : 'quantidade';
+  const campoQuantidade = 'quantidade';
   const unidade = tecidos ? 'Metros atual:' : 'Qtd. atual:';
   const [itens, setItens] = useState<ItemEstoque[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -128,6 +134,7 @@ function EstoqueItens({ tipo }: { tipo: TipoEstoque }) {
   const [form, setForm] = useState<FormItemEstoque>({ nome: '', valor: '', quantidade: '' });
   const [foto, setFoto] = useState<File | null>(null);
   const [fotoPreview, setFotoPreview] = useState('');
+  const inputFoto = useRef<HTMLInputElement>(null);
   const [salvando, setSalvando] = useState(false);
   const [salvandoItem, setSalvandoItem] = useState<string | null>(null);
 
@@ -187,6 +194,21 @@ function EstoqueItens({ tipo }: { tipo: TipoEstoque }) {
       setErroModal('Escolha uma foto para o item.');
       return;
     }
+
+    const quantidade = Number(form.quantidade);
+    if (
+      !Number.isFinite(quantidade) ||
+      quantidade < 0 ||
+      (!tecidos && !Number.isInteger(quantidade)) ||
+      (tecidos && !/^\d{1,8}(?:\.\d{1,2})?$/.test(form.quantidade)) ||
+      (!tecidos && quantidade > 2_147_483_647)
+    ) {
+      setErroModal(tecidos
+        ? 'Informe uma metragem entre 0 e 99.999.999,99, com até duas casas decimais.'
+        : 'Informe uma quantidade inteira entre 0 e 2.147.483.647.');
+      return;
+    }
+
     setSalvando(true);
     const body = new FormData();
     body.append('nome', form.nome.trim());
@@ -194,10 +216,18 @@ function EstoqueItens({ tipo }: { tipo: TipoEstoque }) {
     if (!editando) body.append(campoQuantidade, String(Number(form.quantidade)));
     if (foto) body.append('foto', foto);
     try {
-      await request<ItemApi>(editando ? `${endpoint}/${editando.id}` : endpoint, {
-        method: editando ? 'PATCH' : 'POST',
-        body,
-      });
+      if (editando) {
+        const id = encodeURIComponent(editando.id);
+        await request<ItemApi>(`${endpoint}/${id}`, { method: 'PATCH', body });
+        if (quantidade !== editando.quantidade) {
+          await request<ItemApi>(`${endpoint}/${id}/quantidade`, {
+            method: 'PATCH',
+            body: JSON.stringify({ quantidade }),
+          });
+        }
+      } else {
+        await request<ItemApi>(endpoint, { method: 'POST', body });
+      }
       setModal(false);
       setSucesso(editando ? `${categoria} atualizado com sucesso.` : `${categoria} cadastrado com sucesso.`);
       await carregar();
@@ -249,43 +279,57 @@ function EstoqueItens({ tipo }: { tipo: TipoEstoque }) {
       return;
     }
     if (valor === original) return;
+    const quantidadeAtualizada = Number(valor.toFixed(2));
+    const quantidadeInvalidaPorLimite =
+      campo === 'quantidade' &&
+      (tecidos ? quantidadeAtualizada >= 100_000_000 : quantidadeAtualizada > 2_147_483_647);
+    if (quantidadeInvalidaPorLimite) {
+      input.value = String(original);
+      setErro(tecidos
+        ? 'A metragem deve ser menor que 100.000.000.'
+        : 'A quantidade de adereços excede o limite permitido.');
+      return;
+    }
+
     const salvo = campo === 'valor'
       ? await atualizarCampo(item, Number(valor.toFixed(2)))
-      : await corrigirQuantidade(item, Number(valor.toFixed(2)));
+      : await atualizarQuantidade(item, quantidadeAtualizada);
     if (!salvo) input.value = String(original);
   }
 
-  async function enviarMovimentacao(
-    item: ItemEstoque,
-    body: { tipo: 'entrada' | 'saida'; quantidade: number } | { tipo: 'correcao'; quantidade_atual: number },
-  ): Promise<boolean> {
+  async function atualizarQuantidade(item: ItemEstoque, quantidade: number): Promise<boolean> {
     if (salvandoItem) return false;
     setSalvandoItem(item.id);
     setErro('');
     setSucesso('');
     try {
-      await request<unknown>(`/api/gestao/estoque/${tipo}/${item.id}/movimentacoes`, {
-        method: 'POST',
-        body: JSON.stringify(body),
+      const atualizado = await request<ItemApi>(`${endpoint}/${encodeURIComponent(item.id)}/quantidade`, {
+        method: 'PATCH',
+        body: JSON.stringify({ quantidade }),
       });
-      await carregar();
+      const itemAtualizado = adaptarItem(atualizado);
+      setItens((atuais) => atuais.map((atual) => atual.id === item.id ? itemAtualizado : atual));
       return true;
     } catch (e) {
-      setErro(e instanceof Error ? e.message : `Não foi possível atualizar o estoque de ${item.nome}.`);
+      setErro(e instanceof Error ? e.message : `Não foi possível atualizar a quantidade de ${item.nome}.`);
       return false;
     } finally {
       setSalvandoItem(null);
     }
   }
 
-  async function corrigirQuantidade(item: ItemEstoque, quantidadeAtual: number) {
-    return enviarMovimentacao(item, { tipo: 'correcao', quantidade_atual: quantidadeAtual });
-  }
-
   async function ajustarQuantidade(item: ItemEstoque, direcao: 'entrada' | 'saida') {
     const incremento = 1;
     if (direcao === 'saida' && item.quantidade < incremento) return;
-    await enviarMovimentacao(item, { tipo: direcao, quantidade: incremento });
+    const variacao = direcao === 'entrada' ? incremento : -incremento;
+    const quantidade = Number((item.quantidade + variacao).toFixed(tecidos ? 2 : 0));
+    if (tecidos ? quantidade >= 100_000_000 : quantidade > 2_147_483_647) {
+      setErro(tecidos
+        ? 'A metragem deve ser menor que 100.000.000.'
+        : 'A quantidade de adereços excede o limite permitido.');
+      return;
+    }
+    await atualizarQuantidade(item, quantidade);
   }
 
   async function alternarStatus(item: ItemEstoque) {
@@ -294,9 +338,9 @@ function EstoqueItens({ tipo }: { tipo: TipoEstoque }) {
     setErro('');
     setSucesso('');
     try {
-      const atualizado = await request<ItemApi>(`${endpoint}/${item.id}/habilitado`, {
+      const atualizado = await request<ItemApi>(`${endpoint}/${encodeURIComponent(item.id)}/desabilitado`, {
         method: 'PATCH',
-        body: JSON.stringify({ habilitado: item.desabilitado }),
+        body: JSON.stringify({ desabilitado: !item.desabilitado }),
       });
       const itemAtualizado = adaptarItem(atualizado);
       setItens((atuais) => atuais.map((atual) => atual.id === item.id ? itemAtualizado : atual));
@@ -372,13 +416,33 @@ function EstoqueItens({ tipo }: { tipo: TipoEstoque }) {
           <label className="campo"><span className="campo__rotulo">Nome do item</span><input required maxLength={100} value={form.nome} placeholder="Nome" onChange={(event) => setForm({ ...form, nome: event.target.value })} /></label>
           <label className="campo">
             <span className="campo__rotulo">{tecidos ? 'Imagem do item (Estampa):' : 'Imagem do item:'}</span>
-            <input required={!editando} type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" onChange={(event) => selecionarFoto(event.target.files?.[0])} />
+            <span className="modelo-modal__arquivo">
+              <input
+                ref={inputFoto}
+                className="modelo-modal__arquivo-input"
+                required={!editando}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                aria-label="Selecionar imagem"
+                onChange={(event) => selecionarFoto(event.target.files?.[0])}
+              />
+              <button
+                className="modelo-modal__arquivo-botao"
+                type="button"
+                onClick={() => inputFoto.current?.click()}
+              >
+                Escolher arquivo
+              </button>
+              <span className="modelo-modal__arquivo-nome">
+                {foto?.name ?? (editando ? 'Imagem atual mantida' : 'Nenhum arquivo selecionado')}
+              </span>
+            </span>
             <small className="modelo-modal__ajuda">JPG, PNG ou WebP; até 5 MiB.</small>
             {fotoPreview && <img className="modelo-modal__preview" src={fotoPreview} alt={`Prévia de ${categoria.toLowerCase()}`} />}
           </label>
           <div className="modelo-modal__linha">
             <label className="campo"><span className="campo__rotulo">Valor R$:</span><input required type="number" min="0" step="0.01" value={form.valor} placeholder="R$ 0,00" onChange={(event) => setForm({ ...form, valor: event.target.value })} /></label>
-            {!editando && <label className="campo"><span className="campo__rotulo">{tecidos ? 'Metros atual:' : 'Quantidade atual:'}</span><input required type="number" min="0" step={tecidos ? '0.01' : '1'} value={form.quantidade} placeholder={tecidos ? 'Ex. 42,20' : 'Ex. 20'} onChange={(event) => setForm({ ...form, quantidade: event.target.value })} /></label>}
+            <label className="campo"><span className="campo__rotulo">{tecidos ? (editando ? 'Metros atuais:' : 'Metros atual:') : 'Quantidade atual:'}</span><input required type="number" min="0" max={tecidos ? '99999999.99' : '2147483647'} step={tecidos ? '0.01' : '1'} value={form.quantidade} placeholder={tecidos ? 'Ex. 42,20' : 'Ex. 20'} onChange={(event) => setForm({ ...form, quantidade: event.target.value })} /></label>
           </div>
           <div className="modelo-modal__acoes"><button className="botao botao--secundario" type="button" onClick={() => setModal(false)}>Cancelar</button><button className="botao" disabled={salvando}>{salvando ? 'Salvando…' : editando ? 'Salvar alterações' : 'Salvar item'}</button></div>
         </form>

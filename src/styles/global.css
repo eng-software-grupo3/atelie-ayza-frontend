@@ -1320,6 +1320,7 @@ a.botao--secundario:hover {
   max-height: calc(100dvh - 32px);
   flex-direction: column;
   gap: 8px;
+  overflow-x: hidden;
   overflow-y: auto;
   padding: 10px 28px;
   border: 1px solid var(--cor-destaque);
@@ -1347,6 +1348,7 @@ a.botao--secundario:hover {
 }
 
 .modelo-modal .campo {
+  min-width: 0;
   gap: 3px;
 }
 
@@ -1365,13 +1367,61 @@ a.botao--secundario:hover {
   font-size: 12px;
 }
 
-.modelo-modal .campo input[type=file] {
-  padding: 3px;
+.modelo-modal__arquivo {
+  display: flex;
+  min-width: 0;
+  min-height: 25px;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 5px;
+  overflow: hidden;
+  border: 1px solid var(--cor-destaque);
+  border-radius: 5px;
+  background: #fff;
+  color: var(--cor-destaque);
+  font-size: 10px;
+}
+
+.modelo-modal .campo .modelo-modal__arquivo-input {
+  position: absolute;
+  width: 1px;
+  min-width: 1px;
+  height: 1px;
+  min-height: 1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+.modelo-modal__arquivo-input:focus-visible + .modelo-modal__arquivo-botao {
+  outline: 2px solid var(--cor-destaque);
+  outline-offset: 2px;
+}
+
+.modelo-modal__arquivo-botao {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border: 1px solid var(--cor-destaque);
+  border-radius: 4px;
+  background: #fff7f1;
+  color: var(--cor-destaque);
+  font-size: inherit;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.modelo-modal__arquivo-nome {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .modelo-modal__linha {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
