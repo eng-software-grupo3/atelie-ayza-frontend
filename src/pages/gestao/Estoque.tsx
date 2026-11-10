@@ -19,6 +19,14 @@ const request = apiJson;
 
 const vazio: ModeloForm = { nome: '', parte: 'CIMA', valor: 0, metragem_media_m: 2.5, svg_url: '' };
 
+function useAutoDismiss(message: string, clearMessage: (value: string) => void) {
+  useEffect(() => {
+    if (!message) return;
+    const timeout = window.setTimeout(() => clearMessage(''), 1500);
+    return () => window.clearTimeout(timeout);
+  }, [message, clearMessage]);
+}
+
 const categorias = [
   { to: '/gestao/estoque/tecidos', label: 'Tecidos' },
   { to: '/gestao/estoque/aderecos', label: 'Adereços' },
@@ -157,6 +165,8 @@ function EstoqueItens({ tipo }: { tipo: TipoEstoque }) {
     if (!fotoPreview.startsWith('blob:')) return;
     return () => URL.revokeObjectURL(fotoPreview);
   }, [fotoPreview]);
+
+  useAutoDismiss(sucesso, setSucesso);
 
   function abrir(item?: ItemEstoque) {
     setErroModal('');
@@ -369,15 +379,18 @@ function EstoqueItens({ tipo }: { tipo: TipoEstoque }) {
   return (
     <section className="estoque-modelos" aria-label={`${categoria}s cadastrados`}>
       <EstoqueAbas onCadastrar={() => abrir()} />
-      {sucesso && <div className="alerta alerta--sucesso" role="status">{sucesso}<button className="estoque-modelos__fechar-erro" onClick={() => setSucesso('')} aria-label="Fechar mensagem">×</button></div>}
+      {sucesso && <div className="alerta alerta--sucesso" role="status">{sucesso}</div>}
       {erro && <div className="alerta alerta--erro" role="alert">{erro}<button className="estoque-modelos__fechar-erro" onClick={() => setErro('')} aria-label="Fechar erro">×</button></div>}
       {carregando ? <p className="texto-suave">Carregando {categoria.toLowerCase()}s…</p> : itens.length === 0 ? <p className="texto-suave">Nenhum item cadastrado.</p> : (
         <div className="estoque-modelos__lista">
           {itens.map((item) => (
             <article className={`modelo-card${item.desabilitado ? ' modelo-card--inativo' : ''}`} key={item.id}>
               {item.foto
-                ? <img className="modelo-card__imagem" src={urlApi(item.foto)} alt={item.nome} />
-                : <div className="modelo-card__imagem modelo-card__imagem--vazia" aria-label="Sem foto">Sem foto</div>}
+                ? <div className={`modelo-card__quadro${tecidos ? ' modelo-card__quadro--tecido' : ' modelo-card__quadro--adereco'}`}>
+                    {!tecidos && <img className="modelo-card__imagem-fundo" src={urlApi(item.foto)} alt="" aria-hidden="true" />}
+                    <img className="modelo-card__imagem" src={urlApi(item.foto)} alt={item.nome} />
+                  </div>
+                : <div className="modelo-card__quadro modelo-card__quadro--vazio" aria-label="Sem foto">Sem foto</div>}
               <div className="modelo-card__conteudo">
                 <div className="modelo-card__titulo">
                   <strong>{item.nome}</strong>
@@ -487,6 +500,8 @@ export function EstoqueModelos() {
   /* oxlint-disable react(set-state-in-effect) -- loading remote data is the effect's purpose */
   useEffect(() => { void carregar(); }, [carregar]);
   /* oxlint-enable react(set-state-in-effect) */
+
+  useAutoDismiss(sucesso, setSucesso);
 
   function abrir(modelo?: Modelo) {
     setErroModal('');
@@ -615,13 +630,16 @@ export function EstoqueModelos() {
   return (
     <section className="estoque-modelos" aria-label="Modelos cadastrados">
       <EstoqueAbas onCadastrar={() => abrir()} />
-      {sucesso && <div className="alerta alerta--sucesso" role="status">{sucesso}<button className="estoque-modelos__fechar-erro" onClick={() => setSucesso('')} aria-label="Fechar mensagem">×</button></div>}
+      {sucesso && <div className="alerta alerta--sucesso" role="status">{sucesso}</div>}
       {erro && <div className="alerta alerta--erro" role="alert">{erro}<button className="estoque-modelos__fechar-erro" onClick={() => setErro('')} aria-label="Fechar erro">×</button></div>}
       {carregando ? <p className="texto-suave">Carregando modelos…</p> : modelos.length === 0 ? <p className="texto-suave">Nenhum modelo cadastrado.</p> : (
         <div className="estoque-modelos__lista">
           {modelos.map((modelo) => (
             <article className={`modelo-card${modelo.habilitado ? '' : ' modelo-card--inativo'}`} key={modelo.id}>
-              <img className="modelo-card__imagem" src={modelo.svg_url} alt={`Modelo ${modelo.nome}`} />
+              <div className="modelo-card__quadro modelo-card__quadro--modelo">
+                <img className="modelo-card__imagem-fundo" src={modelo.svg_url} alt="" aria-hidden="true" />
+                <img className="modelo-card__imagem" src={modelo.svg_url} alt={`Modelo ${modelo.nome}`} />
+              </div>
               <div className="modelo-card__conteudo">
                 <div className="modelo-card__titulo">
                   <strong>{modelo.nome}</strong>
