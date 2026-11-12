@@ -2251,7 +2251,9 @@ a.botao--secundario:hover {
 }
 
 .agenda-dia--bloqueada {
-  background: #f7ded6;
+  border-color: #c83f20;
+  background: #e94b35;
+  color: #fff;
 }
 
 .agenda-dia--selecionado,
@@ -2285,6 +2287,10 @@ a.botao--secundario:hover {
   background: #c83f20;
 }
 
+.agenda-dia--bloqueada:not(.agenda-dia--selecionado) .agenda-dia__pedidos i {
+  background: #fff;
+}
+
 .agenda-legenda {
   display: flex;
   flex-wrap: wrap;
@@ -2313,8 +2319,8 @@ a.botao--secundario:hover {
 }
 
 .agenda-legenda__marcador--bloqueado {
-  border-color: var(--cor-destaque);
-  background: #f7ded6;
+  border-color: #c83f20;
+  background: #e94b35;
 }
 
 .agenda-detalhes__topo h2 {
@@ -2327,6 +2333,7 @@ a.botao--secundario:hover {
 
 .agenda-detalhes__topo .botao {
   flex-shrink: 0;
+  font-weight: 700;
 }
 
 .agenda-detalhes__topo .botao img {
