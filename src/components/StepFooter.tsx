@@ -5,9 +5,10 @@ type Props = {
   etapa: Etapa;
   anterior: Etapa | null;
   onAvancar: () => void;
+  desabilitado?: boolean;
 };
 
-export function StepFooter({ etapa, anterior, onAvancar }: Props) {
+export function StepFooter({ etapa, anterior, onAvancar, desabilitado = false }: Props) {
   return (
     <div className="step-footer">
       {anterior ? (
@@ -19,7 +20,7 @@ export function StepFooter({ etapa, anterior, onAvancar }: Props) {
         <span />
       )}
 
-      <button type="button" className="botao" onClick={onAvancar}>
+      <button type="button" className="botao" onClick={onAvancar} disabled={desabilitado}>
         {etapa.rotuloAcao}
         <span className="seta" aria-hidden="true" />
       </button>

@@ -2134,3 +2134,228 @@ a.botao--secundario:hover {
     padding-inline: 4px;
   }
 }
+
+/* Personalização do pedido ----------------------------------------------- */
+
+.personalizacao {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.pedido-preview {
+  height: clamp(320px, 45vh, 460px);
+  flex: 0 0 auto;
+  margin: 0 8px;
+  padding: 11px;
+  border-radius: 17px;
+  background: #f5f5f5;
+  box-shadow: 0 3px 4px rgba(67, 47, 41, 0.3);
+}
+
+.pedido-preview__moldura {
+  position: relative;
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.pedido-preview__pecas {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  place-items: center;
+}
+
+.pedido-preview__peca {
+  display: block;
+  width: min(92%, 380px);
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  object-fit: contain;
+}
+
+.pedido-preview__ausente {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: var(--cor-texto-suave);
+  font-size: 12px;
+}
+
+.pedido-preview__carregando {
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  color: var(--cor-texto-suave);
+  font-size: 10px;
+}
+
+.pedido-preview__erro {
+  margin: 6px 4px 0;
+  color: var(--cor-erro);
+  font-size: 11px;
+  text-align: center;
+}
+
+.personalizacao__conteudo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--cor-borda-suave);
+}
+
+.personalizacao__grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 7px;
+  border: 1px solid #ce8079;
+  border-radius: 10px;
+}
+
+.personalizacao__grupo-titulo {
+  color: #24201f;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.35px;
+  text-transform: uppercase;
+}
+
+.personalizacao__opcoes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.personalizacao__opcao {
+  display: flex;
+  min-width: 0;
+  min-height: 45px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 6px 9px;
+  border: 1px solid #bd7d68;
+  border-radius: 22px;
+  background: #fdf6f2;
+  color: #171312;
+  font-size: 10px;
+  line-height: 1.2;
+  text-align: left;
+  cursor: pointer;
+}
+
+.personalizacao__opcao:hover {
+  border-color: var(--cor-destaque-escuro);
+}
+
+.personalizacao__opcao[aria-pressed='true'] {
+  border-color: var(--cor-destaque);
+  background: var(--cor-destaque);
+  color: #fff;
+}
+
+.personalizacao__opcao > span:first-child,
+.personalizacao__opcao-texto > span {
+  overflow-wrap: anywhere;
+}
+
+.personalizacao__opcao strong {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.personalizacao__opcoes--tecidos {
+  gap: 7px;
+}
+
+.personalizacao__opcao--tecido {
+  min-height: 67px;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 7px;
+  border-radius: 20px;
+}
+
+.personalizacao__amostra {
+  display: block;
+  width: 52px;
+  height: 42px;
+  flex: 0 0 52px;
+  border-radius: 10px;
+  background: #fff;
+  object-fit: cover;
+}
+
+.personalizacao__opcao-texto {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.personalizacao__totais {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 2px 14px 0;
+  padding: 9px 10px;
+  border: 1px solid var(--cor-destaque);
+  border-radius: 14px;
+  background: #fdf7f3;
+  box-shadow: 0 2px 4px rgba(67, 47, 41, 0.24);
+  color: var(--cor-texto-suave);
+  font-size: 12px;
+}
+
+.personalizacao__linha {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.personalizacao__linha--total {
+  padding-top: 2px;
+  color: #111;
+  font-size: 15px;
+}
+
+.personalizacao__vazio,
+.personalizacao__erro {
+  padding: 7px;
+  font-size: 12px;
+}
+
+.personalizacao__erro {
+  border: 1px solid var(--cor-erro);
+  border-radius: 8px;
+  background: var(--cor-erro-claro);
+  color: #612614;
+}
+
+@media (min-width: 480px) {
+  .pedido-preview {
+    height: clamp(340px, 45vh, 500px);
+  }
+
+  .personalizacao__opcao {
+    font-size: 12px;
+  }
+
+  .personalizacao__opcao strong {
+    font-size: 11px;
+  }
+}
