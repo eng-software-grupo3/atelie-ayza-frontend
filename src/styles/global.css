@@ -2258,9 +2258,9 @@ a.botao--secundario:hover {
 
 .agenda-dia--selecionado,
 .agenda-dia--selecionado:hover {
-  border-color: #c83f20;
-  background: #ffcab9;
-  color: #b83c1e;
+  border-color: var(--cor-rosa);
+  background: var(--cor-rosa-claro);
+  color: #292929;
   font-weight: 700;
 }
 
@@ -2284,7 +2284,7 @@ a.botao--secundario:hover {
 }
 
 .agenda-dia--selecionado .agenda-dia__pedidos i {
-  background: #c83f20;
+  background: var(--cor-destaque);
 }
 
 .agenda-dia--bloqueada:not(.agenda-dia--selecionado) .agenda-dia__pedidos i {

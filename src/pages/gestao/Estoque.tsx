@@ -19,6 +19,17 @@ const request = apiJson;
 
 const vazio: ModeloForm = { nome: '', parte: 'CIMA', valor: 0, metragem_media_m: 2.5, svg_url: '' };
 
+/**
+ * Normaliza o SVG do modelo para uso em <img src>.
+ * O backend pode devolver o markup cru (<svg …>) ou um data URI já pronto.
+ */
+function urlDaImagemSvg(svg: string): string {
+  const imagem = svg.trim();
+  return imagem.startsWith('<')
+    ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(imagem)}`
+    : imagem;
+}
+
 function useAutoDismiss(message: string, clearMessage: (value: string) => void) {
   useEffect(() => {
     if (!message) return;
@@ -637,8 +648,8 @@ export function EstoqueModelos() {
           {modelos.map((modelo) => (
             <article className={`modelo-card${modelo.habilitado ? '' : ' modelo-card--inativo'}`} key={modelo.id}>
               <div className="modelo-card__quadro modelo-card__quadro--modelo">
-                <img className="modelo-card__imagem-fundo" src={modelo.svg_url} alt="" aria-hidden="true" />
-                <img className="modelo-card__imagem" src={modelo.svg_url} alt={`Modelo ${modelo.nome}`} />
+                <img className="modelo-card__imagem-fundo" src={urlDaImagemSvg(modelo.svg_url)} alt="" aria-hidden="true" />
+                <img className="modelo-card__imagem" src={urlDaImagemSvg(modelo.svg_url)} alt={`Modelo ${modelo.nome}`} />
               </div>
               <div className="modelo-card__conteudo">
                 <div className="modelo-card__titulo">
@@ -672,7 +683,7 @@ export function EstoqueModelos() {
           <h2 id="modelo-modal-titulo">{editando ? 'Editar Modelo' : 'Cadastrar Modelo'}</h2>
           {erroModal && <div className="alerta alerta--erro modelo-modal__erro" role="alert">{erroModal}</div>}
           <label className="campo"><span className="campo__rotulo">Nome do produto</span><input required maxLength={100} value={form.nome} placeholder="Nome" onChange={(e) => setForm({ ...form, nome: e.target.value })} /></label>
-          <label className="campo"><span className="campo__rotulo">Imagem do item (SVG):</span><input required={!form.svg_url} type="file" accept="image/svg+xml,.svg" onChange={(e) => void selecionarImagem(e.target.files?.[0])} /><small className="modelo-modal__ajuda">Selecione um arquivo .svg; PNG e JPG não são aceitos.</small>{form.svg_url && <img className="modelo-modal__preview" src={form.svg_url} alt="Prévia do modelo" />}</label>
+          <label className="campo"><span className="campo__rotulo">Imagem do item (SVG):</span><input required={!form.svg_url} type="file" accept="image/svg+xml,.svg" onChange={(e) => void selecionarImagem(e.target.files?.[0])} /><small className="modelo-modal__ajuda">Selecione um arquivo .svg; PNG e JPG não são aceitos.</small>{form.svg_url && <img className="modelo-modal__preview" src={urlDaImagemSvg(form.svg_url)} alt="Prévia do modelo" />}</label>
           <div className="modelo-modal__linha">
             <label className="campo"><span className="campo__rotulo">Tipo:</span><select value={form.parte} onChange={(e) => setForm({ ...form, parte: e.target.value as ModeloForm['parte'] })}><option value="CIMA">Top</option><option value="BAIXO">Calcinha</option></select></label>
             <label className="campo"><span className="campo__rotulo">Valor Unitário R$:</span><input required type="number" min="0" step="0.10" value={form.valor} onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })} /></label>
