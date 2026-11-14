@@ -58,6 +58,11 @@ export function Modelo() {
     setRascunho((atual) => ({
       ...atual,
       [modelo.parte === 'CIMA' ? 'modeloCima' : 'modeloBaixo']: modelo,
+      // Os pontos são proporções da peça; ao trocar o modelo eles deixam de fazer sentido.
+      pontos:
+        atual[modelo.parte === 'CIMA' ? 'modeloCima' : 'modeloBaixo']?.id === modelo.id
+          ? atual.pontos
+          : atual.pontos.filter((ponto) => ponto.peca !== modelo.parte),
     }));
   }
 

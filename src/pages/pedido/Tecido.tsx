@@ -25,6 +25,7 @@ export function Tecido() {
         if (!ativo) return;
         setTecidos(tecidosDisponiveis);
         setRascunho((atual) => ({
+          ...atual,
           modeloCima: encontrarModelo(modelos, atual.modeloCima, 'CIMA'),
           modeloBaixo: encontrarModelo(modelos, atual.modeloBaixo, 'BAIXO'),
           tecido:
