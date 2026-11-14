@@ -55,9 +55,16 @@ export function Modelo() {
   const totalModelos = (rascunho.modeloCima?.valor ?? 0) + (rascunho.modeloBaixo?.valor ?? 0);
 
   function selecionarModelo(modelo: ModeloCatalogo) {
+    const campo = modelo.parte === 'CIMA' ? 'modeloCima' : 'modeloBaixo';
+
     setRascunho((atual) => ({
       ...atual,
-      [modelo.parte === 'CIMA' ? 'modeloCima' : 'modeloBaixo']: modelo,
+      [campo]: modelo,
+      // Os pontos são proporções da peça; ao trocar o modelo eles deixam de fazer sentido.
+      pontos:
+        atual[campo]?.id === modelo.id
+          ? atual.pontos
+          : atual.pontos.filter((ponto) => ponto.peca !== modelo.parte),
     }));
   }
 

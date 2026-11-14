@@ -2655,3 +2655,345 @@ a.botao--secundario:hover {
     font-size: 11px;
   }
 }
+
+/* Prévia: marcação de adereços sobre as peças ----------------------------- */
+
+.pedido-preview__peca-caixa {
+  position: relative;
+  width: min(92%, 380px);
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  container-type: size;
+}
+
+.pedido-preview__peca-caixa > .pedido-preview__peca {
+  width: 100%;
+}
+
+/* Cobre exatamente a área desenhada da imagem (object-fit: contain). */
+.pedido-preview__area {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(100cqw, 100cqh * var(--proporcao, 1));
+  height: min(100cqh, 100cqw / var(--proporcao, 1));
+  transform: translate(-50%, -50%);
+}
+
+/* Alvo do toque que cria um ponto; as bolinhas ficam por cima dele. */
+.pedido-preview__alvo {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: crosshair;
+}
+
+.pedido-preview__area--cheia {
+  width: 100%;
+  height: 100%;
+}
+
+/* A área de toque é maior que a bolinha desenhada (14px) para facilitar no celular. */
+.pedido-preview__ponto {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.pedido-preview__ponto:disabled {
+  cursor: default;
+}
+
+.pedido-preview__ponto::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  transform: translate(-50%, -50%);
+  border: 1.5px solid #fff;
+  border-radius: 50%;
+  background: var(--cor-adereco);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+.pedido-preview__ponto[aria-pressed='true']::after {
+  box-shadow:
+    0 0 0 2px #fff,
+    0 0 0 4px var(--cor-destaque-escuro);
+}
+
+.pedido-preview__ponto-remover {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  place-items: center;
+  transform: translate(6px, -26px);
+  border: 1.5px solid #fff;
+  border-radius: 50%;
+  background: var(--cor-destaque-escuro);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* Etapa de tamanho -------------------------------------------------------- */
+
+.personalizacao__grupo-titulo--icone {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.personalizacao__tamanhos {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.personalizacao__tamanho {
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--cor-destaque);
+  border-radius: 10px;
+  background: var(--cor-superficie);
+  color: #000;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.55px;
+  cursor: pointer;
+}
+
+.personalizacao__tamanho:hover {
+  border-color: var(--cor-destaque-escuro);
+}
+
+.personalizacao__tamanho[aria-pressed='true'] {
+  background: var(--cor-destaque);
+  color: #fff;
+  font-weight: 700;
+}
+
+.personalizacao__upload {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px dashed var(--cor-destaque);
+  border-radius: 10px;
+  background: #fff;
+  color: #9ca3af;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-align: center;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.personalizacao__upload:hover {
+  border-color: var(--cor-destaque-escuro);
+}
+
+.personalizacao__foto {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid var(--cor-destaque);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.personalizacao__foto-previa {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.personalizacao__foto-nome {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  color: var(--cor-texto-suave);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.personalizacao__observacoes {
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 8px;
+  border: 1px solid var(--cor-destaque);
+  border-radius: 6px;
+  background: #fff;
+  color: #111;
+  font: inherit;
+  font-size: 11px;
+  resize: vertical;
+}
+
+.personalizacao__observacoes::placeholder {
+  color: #c4c4c4;
+}
+
+/* Etapa de adereços ------------------------------------------------------- */
+
+.personalizacao__instrucao {
+  padding: 10px;
+  border: 1px solid var(--cor-rosa);
+  border-radius: 10px;
+  background: var(--cor-superficie);
+  color: #000;
+  font-size: 10px;
+  line-height: 15px;
+  letter-spacing: 0.2px;
+}
+
+.personalizacao__opcoes--aderecos {
+  gap: 8px;
+  padding: 8px;
+}
+
+.adereco-card {
+  display: flex;
+  height: 66px;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 2px solid transparent;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--cor-adereco) 50%, transparent);
+  color: #000;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Adereços que já têm pontos marcados na peça. */
+.adereco-card[data-com-pontos='true'] {
+  border-color: #000;
+}
+
+/* Adereço escolhido para o próximo toque na peça. */
+.adereco-card[aria-pressed='true'] {
+  outline: 2px solid var(--cor-destaque);
+  outline-offset: 2px;
+}
+
+.adereco-card__foto {
+  display: flex;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #fffcfc;
+}
+
+.adereco-card__foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.adereco-card__info {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  overflow: hidden;
+  font-size: 10px;
+  letter-spacing: 0.3px;
+}
+
+.adereco-card__nome {
+  font-weight: 500;
+  line-height: 13px;
+  overflow-wrap: anywhere;
+}
+
+.adereco-card__preco {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.adereco-card__cor,
+.pontos-lista__cor {
+  display: inline-block;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--cor-adereco);
+}
+
+.adereco-card__cor {
+  width: 8px;
+  height: 8px;
+}
+
+.personalizacao__grupo--pontos {
+  border-color: var(--cor-erro);
+}
+
+.pontos-lista {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+}
+
+.pontos-lista__item {
+  display: flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 10px;
+  letter-spacing: 0.3px;
+}
+
+.pontos-lista__nome {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.pontos-lista__cor {
+  width: 10px;
+  height: 10px;
+}
+
+.pontos-lista__quantidade {
+  color: var(--cor-texto-suave);
+  font-weight: 700;
+}
