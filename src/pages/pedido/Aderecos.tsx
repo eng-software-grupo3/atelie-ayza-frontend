@@ -25,6 +25,7 @@ export function Aderecos() {
   const [erro, setErro] = useState('');
   const [aviso, setAviso] = useState('');
   const [ativoId, setAtivoId] = useState<string | null>(null);
+  const [pontoSelecionadoId, setPontoSelecionadoId] = useState<string | null>(null);
 
   /* oxlint-disable react(set-state-in-effect) -- loading remote data is the effect's purpose */
   useEffect(() => {
@@ -68,6 +69,21 @@ export function Aderecos() {
     [aderecos],
   );
 
+  // A lista mostra um adereço por linha, com a quantidade de pontos marcados.
+  const grupos = useMemo(() => {
+    const porAdereco = new Map<
+      string,
+      { adereco: AderecoCatalogo; cor: string; quantidade: number }
+    >();
+    for (const ponto of rascunho.pontos) {
+      const grupo = porAdereco.get(ponto.adereco.id);
+      if (grupo) grupo.quantidade += 1;
+      else
+        porAdereco.set(ponto.adereco.id, { adereco: ponto.adereco, cor: ponto.cor, quantidade: 1 });
+    }
+    return [...porAdereco.values()];
+  }, [rascunho.pontos]);
+
   // Sem modelo e tecido (acesso direto ou recarga) não há peça para marcar.
   if (!rascunho.modeloCima || !rascunho.modeloBaixo || !rascunho.tecido) {
     return <Navigate to="/pedido/novo/modelo" replace />;
@@ -75,10 +91,17 @@ export function Aderecos() {
 
   function selecionar(adereco: AderecoCatalogo) {
     setAviso('');
+    setPontoSelecionadoId(null);
     setAtivoId((atual) => (atual === adereco.id ? null : adereco.id));
   }
 
   function marcar(peca: ParteDaPeca, x: number, y: number) {
+    // Com um ponto selecionado, o toque em outro lugar só tira a seleção.
+    if (pontoSelecionadoId) {
+      setPontoSelecionadoId(null);
+      return;
+    }
+
     const adereco = aderecos.find((item) => item.id === ativoId);
     if (!adereco) {
       setAviso('Selecione um adereço antes de tocar na peça.');
@@ -103,6 +126,7 @@ export function Aderecos() {
   }
 
   function remover(pontoId: string) {
+    setPontoSelecionadoId(null);
     setRascunho((atual) => ({
       ...atual,
       pontos: atual.pontos.filter((ponto) => ponto.id !== pontoId),
@@ -120,6 +144,9 @@ export function Aderecos() {
         tecido={rascunho.tecido}
         pontos={rascunho.pontos}
         onMarcar={marcar}
+        pontoSelecionadoId={pontoSelecionadoId}
+        onSelecionarPonto={setPontoSelecionadoId}
+        onRemoverPonto={remover}
       />
       <div className="personalizacao__conteudo">
         <h1 className="apenas-leitor">Escolha os adereços</h1>
@@ -127,7 +154,7 @@ export function Aderecos() {
         <p className="personalizacao__instrucao">
           <strong>👉 Como aplicar: </strong>
           Selecione o adereço abaixo e <strong>toque no biquíni no topo</strong> para fixar o ponto
-          colorido onde a costureira deve aplicá-lo!
+          colorido onde a costureira deve aplicá-lo! Para remover, toque na bolinha e depois no ×.
         </p>
         {aviso && (
           <p className="personalizacao__erro" role="status">
@@ -182,23 +209,14 @@ export function Aderecos() {
             <p className="personalizacao__vazio">Nenhum ponto marcado ainda.</p>
           ) : (
             <ul className="pontos-lista">
-              {rascunho.pontos.map((ponto) => (
-                <li className="pontos-lista__item" key={ponto.id} style={estiloCor(ponto.cor)}>
+              {grupos.map(({ adereco, cor, quantidade }) => (
+                <li className="pontos-lista__item" key={adereco.id} style={estiloCor(cor)}>
                   <span className="pontos-lista__nome">
                     <span className="pontos-lista__cor" aria-hidden="true" />
-                    {ponto.adereco.nome}
+                    {adereco.nome}
+                    <span className="pontos-lista__quantidade">{quantidade}x</span>
                   </span>
-                  <span className="pontos-lista__acoes">
-                    <strong>{formatarMoeda(Number(ponto.adereco.preco))}</strong>
-                    <button
-                      className="pontos-lista__remover"
-                      type="button"
-                      aria-label={`Remover ${ponto.adereco.nome}`}
-                      onClick={() => remover(ponto.id)}
-                    >
-                      ×
-                    </button>
-                  </span>
+                  <strong>{formatarMoeda(Number(adereco.preco) * quantidade)}</strong>
                 </li>
               ))}
             </ul>

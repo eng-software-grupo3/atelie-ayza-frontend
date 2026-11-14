@@ -2678,15 +2678,17 @@ a.botao--secundario:hover {
   left: 50%;
   width: min(100cqw, 100cqh * var(--proporcao, 1));
   height: min(100cqh, 100cqw / var(--proporcao, 1));
-  padding: 0;
   transform: translate(-50%, -50%);
+}
+
+/* Alvo do toque que cria um ponto; as bolinhas ficam por cima dele. */
+.pedido-preview__alvo {
+  position: absolute;
+  inset: 0;
+  padding: 0;
   border: 0;
   background: transparent;
   cursor: crosshair;
-}
-
-.pedido-preview__area:disabled {
-  cursor: default;
 }
 
 .pedido-preview__area--cheia {
@@ -2694,8 +2696,27 @@ a.botao--secundario:hover {
   height: 100%;
 }
 
+/* A área de toque é maior que a bolinha desenhada (14px) para facilitar no celular. */
 .pedido-preview__ponto {
   position: absolute;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.pedido-preview__ponto:disabled {
+  cursor: default;
+}
+
+.pedido-preview__ponto::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
   width: 14px;
   height: 14px;
   transform: translate(-50%, -50%);
@@ -2703,7 +2724,32 @@ a.botao--secundario:hover {
   border-radius: 50%;
   background: var(--cor-adereco);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
-  pointer-events: none;
+}
+
+.pedido-preview__ponto[aria-pressed='true']::after {
+  box-shadow:
+    0 0 0 2px #fff,
+    0 0 0 4px var(--cor-destaque-escuro);
+}
+
+/* × ao redor da bolinha selecionada, no canto superior direito dela. */
+.pedido-preview__ponto-remover {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  place-items: center;
+  transform: translate(6px, -26px);
+  border: 1.5px solid #fff;
+  border-radius: 50%;
+  background: var(--cor-destaque-escuro);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
 }
 
 /* Etapa de tamanho -------------------------------------------------------- */
@@ -2949,29 +2995,7 @@ a.botao--secundario:hover {
   height: 10px;
 }
 
-.pontos-lista__acoes {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 8px;
-}
-
-.pontos-lista__remover {
-  display: grid;
-  width: 18px;
-  height: 18px;
-  padding: 0;
-  place-items: center;
-  border: 0;
-  border-radius: 9px;
-  background: #e5e7eb;
-  color: #6b7280;
-  font-size: 10px;
+.pontos-lista__quantidade {
+  color: var(--cor-texto-suave);
   font-weight: 700;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.pontos-lista__remover:hover {
-  background: #d1d5db;
 }

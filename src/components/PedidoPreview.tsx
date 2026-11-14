@@ -1,4 +1,5 @@
 import {
+  Fragment,
   useEffect,
   useMemo,
   useState,
@@ -23,19 +24,35 @@ type Props = {
   pontos?: PontoAdereco[];
   /** Quando informado, tocar numa peça chama a função com a posição (0 a 1) do toque. */
   onMarcar?: (peca: ParteDaPeca, x: number, y: number) => void;
+  /** Ponto escolhido para remoção; ele mostra um × ao redor. */
+  pontoSelecionadoId?: string | null;
+  /** Tocar numa bolinha existente a seleciona; `null` limpa a seleção. */
+  onSelecionarPonto?: (pontoId: string | null) => void;
+  onRemoverPonto?: (pontoId: string) => void;
 };
 
-type PecaPreviewProps = {
+type PecaPreviewProps = Pick<
+  Props,
+  'onMarcar' | 'pontoSelecionadoId' | 'onSelecionarPonto' | 'onRemoverPonto'
+> & {
   src: string;
   alt: string;
   peca: ParteDaPeca;
   pontos: PontoAdereco[];
-  onMarcar?: Props['onMarcar'];
 };
 
 const limitar = (valor: number) => Math.min(1, Math.max(0, valor));
 
-function PecaPreview({ src, alt, peca, pontos, onMarcar }: PecaPreviewProps) {
+function PecaPreview({
+  src,
+  alt,
+  peca,
+  pontos,
+  onMarcar,
+  pontoSelecionadoId = null,
+  onSelecionarPonto,
+  onRemoverPonto,
+}: PecaPreviewProps) {
   const [proporcao, setProporcao] = useState<number | null>(null);
   const pontosDaPeca = pontos.filter((ponto) => ponto.peca === peca);
 
@@ -69,29 +86,52 @@ function PecaPreview({ src, alt, peca, pontos, onMarcar }: PecaPreviewProps) {
     <div className="pedido-preview__peca-caixa">
       <img className="pedido-preview__peca" src={src} alt={alt} onLoad={aoCarregar} />
       {onMarcar || pontosDaPeca.length > 0 ? (
-        <button
-          type="button"
+        <div
           className={`pedido-preview__area${proporcao ? '' : ' pedido-preview__area--cheia'}`}
           style={estiloArea}
-          onClick={marcar}
-          disabled={!onMarcar}
-          aria-label={`Marcar adereço na ${peca === 'CIMA' ? 'peça de cima' : 'peça de baixo'}`}
         >
-          {pontosDaPeca.map((ponto) => (
-            <span
-              key={ponto.id}
-              className="pedido-preview__ponto"
-              aria-hidden="true"
-              style={
-                {
-                  left: `${ponto.x * 100}%`,
-                  top: `${ponto.y * 100}%`,
-                  '--cor-adereco': ponto.cor,
-                } as CSSProperties
-              }
+          {onMarcar && (
+            <button
+              type="button"
+              className="pedido-preview__alvo"
+              onClick={marcar}
+              aria-label={`Marcar adereço na ${peca === 'CIMA' ? 'peça de cima' : 'peça de baixo'}`}
             />
-          ))}
-        </button>
+          )}
+          {pontosDaPeca.map((ponto) => {
+            const selecionado = ponto.id === pontoSelecionadoId;
+            const posicao = {
+              left: `${ponto.x * 100}%`,
+              top: `${ponto.y * 100}%`,
+              '--cor-adereco': ponto.cor,
+            } as CSSProperties;
+
+            return (
+              <Fragment key={ponto.id}>
+                <button
+                  type="button"
+                  className="pedido-preview__ponto"
+                  style={posicao}
+                  aria-label={`Ponto de ${ponto.adereco.nome}`}
+                  aria-pressed={selecionado}
+                  disabled={!onSelecionarPonto}
+                  onClick={() => onSelecionarPonto?.(selecionado ? null : ponto.id)}
+                />
+                {selecionado && onRemoverPonto && (
+                  <button
+                    type="button"
+                    className="pedido-preview__ponto-remover"
+                    style={posicao}
+                    aria-label={`Remover ponto de ${ponto.adereco.nome}`}
+                    onClick={() => onRemoverPonto(ponto.id)}
+                  >
+                    ×
+                  </button>
+                )}
+              </Fragment>
+            );
+          })}
+        </div>
       ) : null}
     </div>
   );
@@ -104,6 +144,9 @@ export function PedidoPreview({
   carregando = false,
   pontos = [],
   onMarcar,
+  pontoSelecionadoId,
+  onSelecionarPonto,
+  onRemoverPonto,
 }: Props) {
   const [previaTecido, setPreviaTecido] = useState<{
     url: string;
@@ -186,6 +229,9 @@ export function PedidoPreview({
               peca="CIMA"
               pontos={pontos}
               onMarcar={onMarcar}
+              pontoSelecionadoId={pontoSelecionadoId}
+              onSelecionarPonto={onSelecionarPonto}
+              onRemoverPonto={onRemoverPonto}
             />
           ) : (
             <span className="pedido-preview__ausente">Top</span>
@@ -197,6 +243,9 @@ export function PedidoPreview({
               peca="BAIXO"
               pontos={pontos}
               onMarcar={onMarcar}
+              pontoSelecionadoId={pontoSelecionadoId}
+              onSelecionarPonto={onSelecionarPonto}
+              onRemoverPonto={onRemoverPonto}
             />
           ) : (
             <span className="pedido-preview__ausente">Calcinha</span>
