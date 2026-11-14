@@ -53,7 +53,6 @@ export const coresDosAderecos = ['#776456', '#8e8c8c', '#376fcf', '#991d4f'] as 
 export const formatarMoeda = (valor: number): string =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
 
-/** Subtotal acumulado até a etapa de tecido (modelos + malha). */
 export function subtotalModeloTecido(rascunho: RascunhoPedido): number {
   return (
     Number(rascunho.modeloCima?.valor ?? 0) +

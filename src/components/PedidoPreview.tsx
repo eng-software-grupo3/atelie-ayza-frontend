@@ -20,25 +20,22 @@ type Props = {
   modeloBaixo: ModeloCatalogo | null;
   tecido?: TecidoCatalogo | null;
   carregando?: boolean;
-  /** Pontos de adereço desenhados sobre as peças. */
   pontos?: PontoAdereco[];
-  /** Quando informado, tocar numa peça chama a função com a posição (0 a 1) do toque. */
+  /** Recebe a posição do toque como proporção (0 a 1) da peça. */
   onMarcar?: (peca: ParteDaPeca, x: number, y: number) => void;
-  /** Ponto escolhido para remoção; ele mostra um × ao redor. */
   pontoSelecionadoId?: string | null;
-  /** Tocar numa bolinha existente a seleciona; `null` limpa a seleção. */
+  /** `null` limpa a seleção. */
   onSelecionarPonto?: (pontoId: string | null) => void;
   onRemoverPonto?: (pontoId: string) => void;
 };
 
 type PecaPreviewProps = Pick<
   Props,
-  'onMarcar' | 'pontoSelecionadoId' | 'onSelecionarPonto' | 'onRemoverPonto'
+  'pontos' | 'onMarcar' | 'pontoSelecionadoId' | 'onSelecionarPonto' | 'onRemoverPonto'
 > & {
   src: string;
   alt: string;
   peca: ParteDaPeca;
-  pontos: PontoAdereco[];
 };
 
 const limitar = (valor: number) => Math.min(1, Math.max(0, valor));
@@ -47,7 +44,7 @@ function PecaPreview({
   src,
   alt,
   peca,
-  pontos,
+  pontos = [],
   onMarcar,
   pontoSelecionadoId = null,
   onSelecionarPonto,
@@ -78,9 +75,7 @@ function PecaPreview({
     );
   }
 
-  const estiloArea = proporcao
-    ? ({ '--proporcao': proporcao } as CSSProperties)
-    : undefined;
+  const estiloArea = proporcao ? ({ '--proporcao': proporcao } as CSSProperties) : undefined;
 
   return (
     <div className="pedido-preview__peca-caixa">
@@ -200,6 +195,8 @@ export function PedidoPreview({
     };
   }, [modeloBaixo, modeloCima, tecido?.foto]);
 
+  const marcacao = { pontos, onMarcar, pontoSelecionadoId, onSelecionarPonto, onRemoverPonto };
+
   const previa = useMemo(() => {
     const imagemCima = modeloCima ? urlDaImagemCatalogo(modeloCima.svg_url) : '';
     const imagemBaixo = modeloBaixo ? urlDaImagemCatalogo(modeloBaixo.svg_url) : '';
@@ -227,11 +224,7 @@ export function PedidoPreview({
               src={previa.cima}
               alt={`Top ${modeloCima.nome}`}
               peca="CIMA"
-              pontos={pontos}
-              onMarcar={onMarcar}
-              pontoSelecionadoId={pontoSelecionadoId}
-              onSelecionarPonto={onSelecionarPonto}
-              onRemoverPonto={onRemoverPonto}
+              {...marcacao}
             />
           ) : (
             <span className="pedido-preview__ausente">Top</span>
@@ -241,11 +234,7 @@ export function PedidoPreview({
               src={previa.baixo}
               alt={`Calcinha ${modeloBaixo.nome}`}
               peca="BAIXO"
-              pontos={pontos}
-              onMarcar={onMarcar}
-              pontoSelecionadoId={pontoSelecionadoId}
-              onSelecionarPonto={onSelecionarPonto}
-              onRemoverPonto={onRemoverPonto}
+              {...marcacao}
             />
           ) : (
             <span className="pedido-preview__ausente">Calcinha</span>

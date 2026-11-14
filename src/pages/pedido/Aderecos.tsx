@@ -57,7 +57,6 @@ export function Aderecos() {
   }, [setRascunho]);
   /* oxlint-enable react(set-state-in-effect) */
 
-  // A cor de cada adereço vem da ordem dele no catálogo.
   const coresPorId = useMemo(
     () =>
       new Map(
@@ -69,7 +68,8 @@ export function Aderecos() {
     [aderecos],
   );
 
-  // A lista mostra um adereço por linha, com a quantidade de pontos marcados.
+  const corDe = (aderecoId: string) => coresPorId.get(aderecoId) ?? coresDosAderecos[0];
+
   const grupos = useMemo(() => {
     const porAdereco = new Map<
       string,
@@ -116,7 +116,7 @@ export function Aderecos() {
         {
           id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
           adereco,
-          cor: coresPorId.get(adereco.id) ?? coresDosAderecos[0],
+          cor: corDe(adereco.id),
           peca,
           x,
           y,
@@ -180,7 +180,7 @@ export function Aderecos() {
                   className="adereco-card"
                   type="button"
                   key={adereco.id}
-                  style={estiloCor(coresPorId.get(adereco.id) ?? coresDosAderecos[0])}
+                  style={estiloCor(corDe(adereco.id))}
                   aria-pressed={ativoId === adereco.id}
                   data-com-pontos={rascunho.pontos.some((ponto) => ponto.adereco.id === adereco.id)}
                   onClick={() => selecionar(adereco)}

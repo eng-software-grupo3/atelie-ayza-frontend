@@ -2732,7 +2732,6 @@ a.botao--secundario:hover {
     0 0 0 4px var(--cor-destaque-escuro);
 }
 
-/* × ao redor da bolinha selecionada, no canto superior direito dela. */
 .pedido-preview__ponto-remover {
   position: absolute;
   z-index: 1;
@@ -2875,7 +2874,6 @@ a.botao--secundario:hover {
   padding: 8px;
 }
 
-/* A cor do adereço vem de --cor-adereco, definida pela ordem no catálogo. */
 .adereco-card {
   display: flex;
   height: 66px;

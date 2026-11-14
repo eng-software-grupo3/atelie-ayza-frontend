@@ -1,7 +1,6 @@
 import { formatarMoeda } from '../data/pedido.ts';
 
 type Props = {
-  /** Linhas intermediárias, como "Subtotal anterior" e "Adereços". */
   linhas: { rotulo: string; valor: number }[];
   total: number;
 };
