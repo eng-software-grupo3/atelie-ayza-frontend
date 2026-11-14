@@ -1,9 +1,218 @@
-/**
- * Etapa de personalização — Adereços.
- *
- * O conteúdo desta tela será implementado em uma etapa futura.
- * Por enquanto a rota existe apenas para manter a navegação entre as etapas.
- */
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { Navigate, useOutletContext } from 'react-router-dom';
+import { PedidoPreview } from '../../components/PedidoPreview.tsx';
+import { TotaisPedido } from '../../components/TotaisPedido.tsx';
+import {
+  coresDosAderecos,
+  formatarMoeda,
+  subtotalModeloTecido,
+  totalAderecos,
+  type ContextoPedido,
+  type ParteDaPeca,
+} from '../../data/pedido.ts';
+import {
+  carregarAderecos,
+  urlDaImagemCatalogo,
+  type AderecoCatalogo,
+} from '../../services/catalogo.ts';
+
+const estiloCor = (cor: string) => ({ '--cor-adereco': cor }) as CSSProperties;
+
 export function Aderecos() {
-  return null;
+  const { rascunho, setRascunho } = useOutletContext<ContextoPedido>();
+  const [aderecos, setAderecos] = useState<AderecoCatalogo[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState('');
+  const [aviso, setAviso] = useState('');
+  const [ativoId, setAtivoId] = useState<string | null>(null);
+
+  /* oxlint-disable react(set-state-in-effect) -- loading remote data is the effect's purpose */
+  useEffect(() => {
+    let ativo = true;
+
+    void carregarAderecos()
+      .then((lista) => {
+        if (!ativo) return;
+        setAderecos(lista);
+        // Descarta pontos de adereços que saíram do catálogo desde a última visita.
+        setRascunho((atual) => ({
+          ...atual,
+          pontos: atual.pontos.filter((ponto) =>
+            lista.some((adereco) => adereco.id === ponto.adereco.id),
+          ),
+        }));
+      })
+      .catch((e: unknown) => {
+        if (ativo)
+          setErro(e instanceof Error ? e.message : 'Não foi possível carregar os adereços.');
+      })
+      .finally(() => {
+        if (ativo) setCarregando(false);
+      });
+
+    return () => {
+      ativo = false;
+    };
+  }, [setRascunho]);
+  /* oxlint-enable react(set-state-in-effect) */
+
+  // A cor de cada adereço vem da ordem dele no catálogo.
+  const coresPorId = useMemo(
+    () =>
+      new Map(
+        aderecos.map((adereco, indice) => [
+          adereco.id,
+          coresDosAderecos[indice % coresDosAderecos.length],
+        ]),
+      ),
+    [aderecos],
+  );
+
+  // Sem modelo e tecido (acesso direto ou recarga) não há peça para marcar.
+  if (!rascunho.modeloCima || !rascunho.modeloBaixo || !rascunho.tecido) {
+    return <Navigate to="/pedido/novo/modelo" replace />;
+  }
+
+  function selecionar(adereco: AderecoCatalogo) {
+    setAviso('');
+    setAtivoId((atual) => (atual === adereco.id ? null : adereco.id));
+  }
+
+  function marcar(peca: ParteDaPeca, x: number, y: number) {
+    const adereco = aderecos.find((item) => item.id === ativoId);
+    if (!adereco) {
+      setAviso('Selecione um adereço antes de tocar na peça.');
+      return;
+    }
+
+    setAviso('');
+    setRascunho((atual) => ({
+      ...atual,
+      pontos: [
+        ...atual.pontos,
+        {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          adereco,
+          cor: coresPorId.get(adereco.id) ?? coresDosAderecos[0],
+          peca,
+          x,
+          y,
+        },
+      ],
+    }));
+  }
+
+  function remover(pontoId: string) {
+    setRascunho((atual) => ({
+      ...atual,
+      pontos: atual.pontos.filter((ponto) => ponto.id !== pontoId),
+    }));
+  }
+
+  const subtotal = subtotalModeloTecido(rascunho);
+  const valorAderecos = totalAderecos(rascunho.pontos);
+
+  return (
+    <div className="personalizacao">
+      <PedidoPreview
+        modeloCima={rascunho.modeloCima}
+        modeloBaixo={rascunho.modeloBaixo}
+        tecido={rascunho.tecido}
+        pontos={rascunho.pontos}
+        onMarcar={marcar}
+      />
+      <div className="personalizacao__conteudo">
+        <h1 className="apenas-leitor">Escolha os adereços</h1>
+
+        <p className="personalizacao__instrucao">
+          <strong>👉 Como aplicar: </strong>
+          Selecione o adereço abaixo e <strong>toque no biquíni no topo</strong> para fixar o ponto
+          colorido onde a costureira deve aplicá-lo!
+        </p>
+        {aviso && (
+          <p className="personalizacao__erro" role="status">
+            {aviso}
+          </p>
+        )}
+        {erro && (
+          <p className="personalizacao__erro" role="alert">
+            {erro}
+          </p>
+        )}
+
+        <section aria-label="Adereços disponíveis">
+          <h2 className="personalizacao__grupo-titulo">Adereços disponíveis:</h2>
+          {aderecos.length === 0 ? (
+            <p className="personalizacao__vazio">
+              {carregando ? 'Carregando adereços…' : 'Nenhum adereço disponível no catálogo.'}
+            </p>
+          ) : (
+            <div className="personalizacao__opcoes personalizacao__opcoes--aderecos">
+              {aderecos.map((adereco) => (
+                <button
+                  className="adereco-card"
+                  type="button"
+                  key={adereco.id}
+                  style={estiloCor(coresPorId.get(adereco.id) ?? coresDosAderecos[0])}
+                  aria-pressed={ativoId === adereco.id}
+                  data-com-pontos={rascunho.pontos.some((ponto) => ponto.adereco.id === adereco.id)}
+                  onClick={() => selecionar(adereco)}
+                >
+                  <span className="adereco-card__foto">
+                    {adereco.foto && <img src={urlDaImagemCatalogo(adereco.foto)} alt="" />}
+                  </span>
+                  <span className="adereco-card__info">
+                    <span className="adereco-card__nome">{adereco.nome}</span>
+                    <span className="adereco-card__preco">
+                      <span className="adereco-card__cor" aria-hidden="true" />
+                      <strong>{formatarMoeda(Number(adereco.preco))}</strong>
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="personalizacao__grupo personalizacao__grupo--pontos">
+          <h2 className="personalizacao__grupo-titulo">
+            Pontos marcados na peça: {rascunho.pontos.length}
+          </h2>
+          {rascunho.pontos.length === 0 ? (
+            <p className="personalizacao__vazio">Nenhum ponto marcado ainda.</p>
+          ) : (
+            <ul className="pontos-lista">
+              {rascunho.pontos.map((ponto) => (
+                <li className="pontos-lista__item" key={ponto.id} style={estiloCor(ponto.cor)}>
+                  <span className="pontos-lista__nome">
+                    <span className="pontos-lista__cor" aria-hidden="true" />
+                    {ponto.adereco.nome}
+                  </span>
+                  <span className="pontos-lista__acoes">
+                    <strong>{formatarMoeda(Number(ponto.adereco.preco))}</strong>
+                    <button
+                      className="pontos-lista__remover"
+                      type="button"
+                      aria-label={`Remover ${ponto.adereco.nome}`}
+                      onClick={() => remover(ponto.id)}
+                    >
+                      ×
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <TotaisPedido
+          linhas={[
+            { rotulo: 'Subtotal anterior:', valor: subtotal },
+            { rotulo: 'Adereços:', valor: valorAderecos },
+          ]}
+          total={subtotal + valorAderecos}
+        />
+      </div>
+    </div>
+  );
 }
