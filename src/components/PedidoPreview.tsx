@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type MouseEvent,
+  type SyntheticEvent,
+} from 'react';
+import type { ParteDaPeca, PontoAdereco } from '../data/pedido.ts';
 import type { ModeloCatalogo } from '../services/catalogo.ts';
 import {
   aplicarTecidoNoModelo,
@@ -11,13 +19,91 @@ type Props = {
   modeloBaixo: ModeloCatalogo | null;
   tecido?: TecidoCatalogo | null;
   carregando?: boolean;
+  /** Pontos de adereço desenhados sobre as peças. */
+  pontos?: PontoAdereco[];
+  /** Quando informado, tocar numa peça chama a função com a posição (0 a 1) do toque. */
+  onMarcar?: (peca: ParteDaPeca, x: number, y: number) => void;
 };
+
+type PecaPreviewProps = {
+  src: string;
+  alt: string;
+  peca: ParteDaPeca;
+  pontos: PontoAdereco[];
+  onMarcar?: Props['onMarcar'];
+};
+
+const limitar = (valor: number) => Math.min(1, Math.max(0, valor));
+
+function PecaPreview({ src, alt, peca, pontos, onMarcar }: PecaPreviewProps) {
+  const [proporcao, setProporcao] = useState<number | null>(null);
+  const pontosDaPeca = pontos.filter((ponto) => ponto.peca === peca);
+
+  function aoCarregar(evento: SyntheticEvent<HTMLImageElement>) {
+    const { naturalWidth, naturalHeight } = evento.currentTarget;
+    setProporcao(naturalWidth > 0 && naturalHeight > 0 ? naturalWidth / naturalHeight : null);
+  }
+
+  function marcar(evento: MouseEvent<HTMLButtonElement>) {
+    if (!onMarcar) return;
+    const area = evento.currentTarget.getBoundingClientRect();
+    if (area.width === 0 || area.height === 0) return;
+
+    // Ativação por teclado não tem posição de toque: marca o centro da peça.
+    if (evento.detail === 0) {
+      onMarcar(peca, 0.5, 0.5);
+      return;
+    }
+    onMarcar(
+      peca,
+      limitar((evento.clientX - area.left) / area.width),
+      limitar((evento.clientY - area.top) / area.height),
+    );
+  }
+
+  const estiloArea = proporcao
+    ? ({ '--proporcao': proporcao } as CSSProperties)
+    : undefined;
+
+  return (
+    <div className="pedido-preview__peca-caixa">
+      <img className="pedido-preview__peca" src={src} alt={alt} onLoad={aoCarregar} />
+      {onMarcar || pontosDaPeca.length > 0 ? (
+        <button
+          type="button"
+          className={`pedido-preview__area${proporcao ? '' : ' pedido-preview__area--cheia'}`}
+          style={estiloArea}
+          onClick={marcar}
+          disabled={!onMarcar}
+          aria-label={`Marcar adereço na ${peca === 'CIMA' ? 'peça de cima' : 'peça de baixo'}`}
+        >
+          {pontosDaPeca.map((ponto) => (
+            <span
+              key={ponto.id}
+              className="pedido-preview__ponto"
+              aria-hidden="true"
+              style={
+                {
+                  left: `${ponto.x * 100}%`,
+                  top: `${ponto.y * 100}%`,
+                  '--cor-adereco': ponto.cor,
+                } as CSSProperties
+              }
+            />
+          ))}
+        </button>
+      ) : null}
+    </div>
+  );
+}
 
 export function PedidoPreview({
   modeloCima,
   modeloBaixo,
   tecido = null,
   carregando = false,
+  pontos = [],
+  onMarcar,
 }: Props) {
   const [previaTecido, setPreviaTecido] = useState<{
     url: string;
@@ -94,19 +180,23 @@ export function PedidoPreview({
       <div className="pedido-preview__moldura">
         <div className="pedido-preview__pecas">
           {modeloCima ? (
-            <img
-              className="pedido-preview__peca"
+            <PecaPreview
               src={previa.cima}
               alt={`Top ${modeloCima.nome}`}
+              peca="CIMA"
+              pontos={pontos}
+              onMarcar={onMarcar}
             />
           ) : (
             <span className="pedido-preview__ausente">Top</span>
           )}
           {modeloBaixo ? (
-            <img
-              className="pedido-preview__peca"
+            <PecaPreview
               src={previa.baixo}
               alt={`Calcinha ${modeloBaixo.nome}`}
+              peca="BAIXO"
+              pontos={pontos}
+              onMarcar={onMarcar}
             />
           ) : (
             <span className="pedido-preview__ausente">Calcinha</span>
