@@ -2457,6 +2457,14 @@ a.botao--secundario:hover {
   object-fit: contain;
 }
 
+.pedido-preview__pecas > :first-child {
+  transform: translateY(16%);
+}
+
+.pedido-preview__pecas > :last-child {
+  transform: translateY(-16%);
+}
+
 .pedido-preview__ausente {
   display: grid;
   width: 100%;
@@ -2496,6 +2504,7 @@ a.botao--secundario:hover {
   padding: 7px;
   border: 1px solid #ce8079;
   border-radius: 10px;
+  background: #fdf6f2;
 }
 
 .personalizacao__grupo-titulo {
@@ -2556,12 +2565,14 @@ a.botao--secundario:hover {
 }
 
 .personalizacao__opcao--tecido {
+  height: 67px;
   min-height: 67px;
   flex-direction: row;
   align-items: center;
   gap: 8px;
   padding: 7px;
   border-radius: 20px;
+  overflow: hidden;
 }
 
 .personalizacao__amostra {
@@ -2576,9 +2587,20 @@ a.botao--secundario:hover {
 
 .personalizacao__opcao-texto {
   display: flex;
+  height: 42px;
   min-width: 0;
+  flex: 1;
   flex-direction: column;
-  gap: 2px;
+  justify-content: space-between;
+}
+
+.personalizacao__opcao-texto > span {
+  display: -webkit-box;
+  min-height: 2.4em;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.2;
 }
 
 .personalizacao__totais {
