@@ -2705,3 +2705,108 @@ a.botao--secundario:hover {
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
   pointer-events: none;
 }
+
+/* Etapa de tamanho -------------------------------------------------------- */
+
+.personalizacao__grupo-titulo--icone {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.personalizacao__tamanhos {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.personalizacao__tamanho {
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--cor-destaque);
+  border-radius: 10px;
+  background: var(--cor-superficie);
+  color: #000;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.55px;
+  cursor: pointer;
+}
+
+.personalizacao__tamanho:hover {
+  border-color: var(--cor-destaque-escuro);
+}
+
+.personalizacao__tamanho[aria-pressed='true'] {
+  background: var(--cor-destaque);
+  color: #fff;
+  font-weight: 700;
+}
+
+.personalizacao__upload {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px dashed var(--cor-destaque);
+  border-radius: 10px;
+  background: #fff;
+  color: #9ca3af;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-align: center;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.personalizacao__upload:hover {
+  border-color: var(--cor-destaque-escuro);
+}
+
+.personalizacao__foto {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid var(--cor-destaque);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.personalizacao__foto-previa {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.personalizacao__foto-nome {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  color: var(--cor-texto-suave);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.personalizacao__observacoes {
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 8px;
+  border: 1px solid var(--cor-destaque);
+  border-radius: 6px;
+  background: #fff;
+  color: #111;
+  font: inherit;
+  font-size: 11px;
+  resize: vertical;
+}
+
+.personalizacao__observacoes::placeholder {
+  color: #c4c4c4;
+}

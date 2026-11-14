@@ -24,6 +24,8 @@ export type RascunhoPedido = {
   tamanhoCima: TamanhoPeca;
   tamanhoBaixo: TamanhoPeca;
   fotoReferencia: File | null;
+  /** Data URL da foto, só para exibir a prévia; o envio usa `fotoReferencia`. */
+  fotoPrevia: string | null;
   observacoes: string;
   pontos: PontoAdereco[];
 };
@@ -40,6 +42,7 @@ export const rascunhoInicial: RascunhoPedido = {
   tamanhoCima: 'M',
   tamanhoBaixo: 'M',
   fotoReferencia: null,
+  fotoPrevia: null,
   observacoes: '',
   pontos: [],
 };
