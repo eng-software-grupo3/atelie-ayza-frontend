@@ -17,6 +17,17 @@ export type TecidoCatalogo = {
   preco_metro: number;
 };
 
+export type AderecoCatalogo = {
+  id: string;
+  nome: string;
+  foto: string | null;
+  preco: number;
+};
+
+export function carregarAderecos(): Promise<AderecoCatalogo[]> {
+  return apiJson<AderecoCatalogo[]>('/api/aderecos');
+}
+
 export function carregarModelos(): Promise<ModeloCatalogo[]> {
   return apiJson<ModeloCatalogo[]>('/api/modelos');
 }
