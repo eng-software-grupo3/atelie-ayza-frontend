@@ -18,11 +18,13 @@
     "vite": "latest"
   },
   "devDependencies": {
+    "@types/node": "^26.6.6",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "oxlint": "latest",
     "oxlint-tsgolint": "latest",
     "prettier": "^3.4.2",
+    "qrcode.react": "^4.2.0",
     "typescript": "latest"
   }
 }

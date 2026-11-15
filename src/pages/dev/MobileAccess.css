@@ -1,0 +1,64 @@
+/* Página /mobile (somente dev) ------------------------------------------- */
+
+.mobile-acesso {
+  display: grid;
+  width: 100%;
+  max-width: 720px;
+  margin-inline: auto;
+  padding: var(--espaco-vertical) max(var(--espaco-lateral), env(safe-area-inset-right))
+    calc(var(--espaco-vertical) + env(safe-area-inset-bottom))
+    max(var(--espaco-lateral), env(safe-area-inset-left));
+  gap: 16px;
+}
+
+.mobile-acesso__cabecalho {
+  display: grid;
+  gap: 6px;
+}
+
+.mobile-acesso__cabecalho h1 {
+  font-family: Hubballi, Inter, sans-serif;
+  font-size: clamp(24px, 6vw, 32px);
+  font-weight: 400;
+}
+
+.mobile-acesso__secao {
+  display: grid;
+  gap: 12px;
+}
+
+.mobile-acesso__url {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.mobile-acesso__qr {
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+  border: 1px solid var(--cor-borda-suave);
+  border-radius: var(--raio);
+  background: #fff;
+}
+
+.mobile-acesso__qr svg {
+  width: min(260px, 100%);
+  height: auto;
+}
+
+.mobile-acesso__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobile-acesso__lista {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+  list-style: disc;
+  font-size: 14px;
+}

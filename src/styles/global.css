@@ -410,6 +410,21 @@ textarea {
   }
 }
 
+/* Em 320px os quatro itens da gestão precisam caber na mesma linha. */
+@media (max-width: 359px) {
+  .nav-pill__item {
+    padding-inline: 2px;
+    font-size: 11px;
+    letter-spacing: 0.4px;
+  }
+
+  .nav-pill--sub .nav-pill__item {
+    padding-inline: 3px;
+    font-size: 9px;
+    letter-spacing: 0;
+  }
+}
+
 /* Alternador da cliente -------------------------------------------------- */
 
 .tab-switch {

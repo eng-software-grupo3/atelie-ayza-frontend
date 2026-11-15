@@ -73,12 +73,56 @@ O frontend inicia em `http://localhost:5173` por padrão e também fica acessív
 | `npm run lint`    | Executa Oxlint nos fontes                             |
 | `npm run format`  | Formata os arquivos com Prettier                      |
 
+## Testar no celular
+
+O servidor de desenvolvimento já escuta na rede local (`host: '0.0.0.0'`) e, ao
+subir, imprime os endereços no terminal:
+
+```text
+  Celular na mesma rede Wi-Fi:
+  http://192.168.0.8:5173/        (abrir no celular)
+  http://192.168.0.8:5173/mobile  (QR e sessão)
+```
+
+1. Conecte o celular na mesma rede Wi-Fi do computador.
+2. Abra `http://<ip-do-pc>:5173` no navegador do aparelho.
+3. Use a página `/mobile` para ver os endereços disponíveis e transferir a
+   sessão do PC.
+
+### Sessão no celular (`/mobile`)
+
+O login com Google não conclui a partir de um IP da rede local, porque o
+`redirect_uri` cadastrado aponta para o backend em `localhost`. Para conferir as
+telas autenticadas no aparelho sem mexer no backend, faça login no PC, abra
+`/mobile` e toque em **Gerar QR de sessão**:
+
+- o código vale por 2 minutos e só pode ser usado uma vez;
+- o QR abre `http://<ip>:5173/mobile#codigo=...` no celular, que troca o código
+  pela sessão salva e entra já autenticado;
+- os endpoints `/__dev/network` e `/__dev/sessao` só existem com `vite dev`
+  (`apply: 'serve'`) e só aceitam chamadas de loopback ou de faixas privadas.
+
+Se o login Google for necessário direto no aparelho, use um túnel HTTPS ou o
+port forwarding do Chrome via USB; isso não faz parte do fluxo atual.
+
+### Overlay de verificação
+
+Em desenvolvimento aparece uma pílula no canto inferior direito com a largura
+atual da viewport e um indicador de overflow horizontal (verde/vermelho). Toque
+nela — ou use `Shift` + `M` no teclado — para abrir o painel com breakpoint,
+densidade de tela e os elementos que estão estourando. A opção **Ocultar
+pílula** esconde o indicador; recarregar a página o traz de volta.
+
+O overlay (`src/components/MobileCheck.tsx`) e a página `/mobile`
+(`src/pages/dev/MobileAccess.tsx`) são carregados por `import.meta.env.DEV` e
+não entram no build de produção.
+
 ## Estrutura do projeto
 
 ```text
 atelie-ayza-frontend/
 ├── index.html              # HTML base, fontes (Inter + Hubballi), manifest e metas de app
-├── vite.config.ts          # plugin React, porta via VITE_DEV_PORT e host na rede local
+├── vite.config.ts          # plugin React, porta via VITE_DEV_PORT, host na rede local e endpoints /__dev/*
 ├── tsconfig*.json          # configuração TypeScript (app e node)
 ├── .oxlintrc.json          # regras do Oxlint
 ├── .prettierrc.json        # regras do Prettier
@@ -94,7 +138,8 @@ atelie-ayza-frontend/
     ├── pages/              # telas separadas por área
     │   ├── cliente/
     │   ├── pedido/
-    │   └── gestao/
+    │   ├── gestao/
+    │   └── dev/            # apoio ao desenvolvimento (/mobile), fora do build
     ├── styles/             # tokens e estilos globais
     ├── App.tsx             # árvore de rotas
     ├── main.tsx            # bootstrap do React + BrowserRouter
@@ -154,6 +199,7 @@ ponto único (`index.ts`).
 | `StepBar.tsx`        | Barra das 6 etapas do pedido, com todas as etapas clicáveis e a atual em destaque                                                     |
 | `StepFooter.tsx`     | Rodapé fixo do pedido: link "Voltar" (quando existe etapa anterior) e botão de avanço com o rótulo da próxima seção                   |
 | `ProtectedRoute.tsx` | Guarda de rota por área: `gestao` exige `isAdmin`; `cliente` exige quem não é admin. Sem sessão, redireciona para `/login`            |
+| `MobileCheck.tsx`    | Overlay de verificação de layout (largura, breakpoint e overflow). Só existe em desenvolvimento; estilos em `MobileCheck.css`         |
 
 #### `src/data/`
 
@@ -183,6 +229,7 @@ Telas separadas por área. Cada arquivo exporta um componente de página usado e
 | `cliente/` | `Home.tsx`, `MeusPedidos.tsx`, `Login.tsx`, `NotFound.tsx`                             | Home pública; Login inicia o OAuth; Meus pedidos tem só o botão de novo pedido |
 | `pedido/`  | `Modelo.tsx`, `Tecido.tsx`, `Tamanho.tsx`, `Aderecos.tsx`, `Resumo.tsx`, `Entrega.tsx` | Todos vazios (`return null`), existem para manter as rotas e a navegação       |
 | `gestao/`  | `Dashboard.tsx`, `Pedidos.tsx`, `Estoque.tsx`, `Agenda.tsx`                            | Dashboard, Pedidos e Agenda vazios; Estoque tem sub-abas e 3 subpáginas vazias |
+| `dev/`     | `MobileAccess.tsx`                                                                     | Página `/mobile` com IPs da rede, QR de sessão e dicas; só em desenvolvimento |
 
 #### `src/contexts/` e `src/services/`
 
@@ -196,7 +243,11 @@ Telas separadas por área. Cada arquivo exporta um componente de página usado e
 
 | Arquivo      | O que contém                                                                                                                           |
 | ------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `global.css` | Tokens de cor, tipografia, reset e classes de layout, navegação, etapas, botões e conteúdo. É o único CSS do projeto (sem CSS modules) |
+| `global.css` | Tokens de cor, tipografia, reset e classes de layout, navegação, etapas, botões e conteúdo. É o CSS compartilhado do projeto (sem CSS modules) |
+
+Os únicos CSS fora do `global.css` são os de desenvolvimento
+(`src/components/MobileCheck.css` e `src/pages/dev/MobileAccess.css`), importados
+pelos próprios módulos de dev para não entrarem no build de produção.
 
 Grupos de classes disponíveis:
 

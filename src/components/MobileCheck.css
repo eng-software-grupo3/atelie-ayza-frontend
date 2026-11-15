@@ -1,0 +1,160 @@
+/* Verificação mobile (somente dev) --------------------------------------- */
+
+.mobile-check {
+  position: fixed;
+  right: max(12px, env(safe-area-inset-right));
+  /* Fica acima do .step-footer (sticky, ~60px) para não cobrir o CTA. */
+  bottom: calc(72px + env(safe-area-inset-bottom));
+  /* Abaixo dos modais (20/21): a pílula não deve cobrir os botões deles. */
+  z-index: 15;
+  display: flex;
+  max-width: calc(100vw - 24px);
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.mobile-check__pivo {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border: 1px solid var(--cor-borda-suave);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--cor-texto);
+  box-shadow: 0 8px 24px rgba(109, 76, 66, 0.2);
+  cursor: pointer;
+  pointer-events: auto;
+  backdrop-filter: blur(6px);
+}
+
+.mobile-check__largura {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.mobile-check__status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cor-sucesso);
+}
+
+.mobile-check__status--erro {
+  background: var(--cor-erro);
+}
+
+.mobile-check__painel {
+  width: min(300px, 100%);
+  max-height: min(70dvh, 520px);
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid var(--cor-borda-suave);
+  border-radius: var(--raio);
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(109, 76, 66, 0.24);
+  pointer-events: auto;
+}
+
+.mobile-check__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.mobile-check__fechar {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--cor-borda-suave);
+  border-radius: 50%;
+  background: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mobile-check__medidas {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 10px;
+}
+
+.mobile-check__medidas > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mobile-check__medidas dt {
+  color: var(--cor-texto-suave);
+}
+
+.mobile-check__medidas dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+.mobile-check__overflow {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(13, 159, 35, 0.08);
+  color: var(--cor-verde);
+  font-size: 12px;
+}
+
+.mobile-check__overflow--erro {
+  background: rgba(210, 75, 34, 0.08);
+  color: var(--cor-erro);
+}
+
+.mobile-check__overflow ul {
+  display: grid;
+  gap: 2px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mobile-check__overflow code,
+.mobile-acesso code {
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.mobile-check__dica {
+  margin: 10px 0 0;
+  color: var(--cor-texto-suave);
+  font-size: 11px;
+}
+
+.mobile-check__ocultar {
+  width: 100%;
+  min-height: 32px;
+  margin-top: 8px;
+  padding: 4px 8px;
+  border: 1px solid var(--cor-borda-suave);
+  border-radius: 8px;
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.mobile-check kbd,
+.mobile-acesso kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--cor-borda-suave);
+  border-radius: 4px;
+  background: var(--cor-superficie);
+  font-family: inherit;
+  font-size: 11px;
+}

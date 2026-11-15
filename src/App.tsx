@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute.tsx';
 import { ClienteLayout } from './layouts/ClienteLayout.tsx';
@@ -23,6 +24,13 @@ import { Modelo } from './pages/pedido/Modelo.tsx';
 import { Resumo } from './pages/pedido/Resumo.tsx';
 import { Tamanho } from './pages/pedido/Tamanho.tsx';
 import { Tecido } from './pages/pedido/Tecido.tsx';
+
+// Página de apoio ao desenvolvimento; o import dinâmico é eliminado no build.
+const MobileAccess = import.meta.env.DEV
+  ? lazy(() =>
+      import('./pages/dev/MobileAccess.tsx').then((modulo) => ({ default: modulo.MobileAccess })),
+    )
+  : null;
 
 function App() {
   return (
@@ -60,6 +68,17 @@ function App() {
           <Route path="agenda" element={<Agenda />} />
         </Route>
       </Route>
+
+      {import.meta.env.DEV && MobileAccess && (
+        <Route
+          path="/mobile"
+          element={
+            <Suspense fallback={null}>
+              <MobileAccess />
+            </Suspense>
+          }
+        />
+      )}
 
       <Route path="*" element={<NotFound />} />
     </Routes>
