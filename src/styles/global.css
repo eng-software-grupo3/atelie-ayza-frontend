@@ -1303,6 +1303,7 @@ a.botao--secundario:hover {
 .modelo-card__base {
   display: flex;
   min-width: 0;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 6px;
@@ -1357,15 +1358,35 @@ a.botao--secundario:hover {
 
 .modelo-card__acoes {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 5px;
+  margin-left: auto;
 }
 
 .modelo-card__acoes .botao {
+  flex-shrink: 0;
   min-height: 28px;
   padding: 0 10px;
   border-radius: 6px;
   font-size: 11px;
+  white-space: nowrap;
+}
+
+/* Em telas estreitas, reduz o respiro para o stepper e os dois botões
+   (incluindo "× Excluir") caberem na mesma linha do card. */
+@media (max-width: 479px) {
+  .modelo-card__base {
+    gap: 4px;
+  }
+
+  .modelo-card__acoes {
+    gap: 4px;
+  }
+
+  .modelo-card__acoes .botao {
+    padding-inline: 8px;
+  }
 }
 
 .botao--sucesso {
