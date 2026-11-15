@@ -71,6 +71,7 @@ O frontend inicia em `http://localhost:5173` por padrão e também fica acessív
 | `npm run build`   | Valida os tipos TypeScript e gera o build de produção |
 | `npm run preview` | Serve localmente o build de produção                  |
 | `npm run lint`    | Executa Oxlint nos fontes                             |
+| `npm run css:check` | Aponta classes do `global.css` sem uso em `src/`    |
 | `npm run format`  | Formata os arquivos com Prettier                      |
 
 ## Testar no celular
@@ -129,6 +130,7 @@ atelie-ayza-frontend/
 ├── .env.example            # variáveis de ambiente de exemplo
 ├── README.md               # este guia
 ├── PENDENCIAS_US3.md       # backlog da US3
+├── scripts/                # verificação de classes do CSS (`npm run css:check`)
 ├── public/                 # manifest, ícones e favicon servidos na raiz
 └── src/
     ├── assets/             # logos e ícones
@@ -255,8 +257,12 @@ Grupos de classes disponíveis:
 - **Marca:** `.logo`, `.logo__icone`, `.logo__assinatura`, `.logo__ateliê` — as cores padrão vêm dos tokens `--cor-logo-desenho` e `--cor-logo-assinatura`
 - **Navegação:** `.nav-pill`, `.tab-switch`, `.step-bar`
 - **Etapas:** `.step-footer`, `.seta`
-- **Botões:** `.botao`, `.botao--secundario`, `.botao--perigo`, `.botao--bloco`, `.botao--pequeno`
-- **Conteúdo (prontas para as próximas etapas):** `.cartao`, `.lista`, `.secao`, `.opcao`, `.chip`, `.campo`, `.totais`, `.grade-status`, `.status`, `.alerta`, `.hero`, `.login`
+- **Botões:** `.botao`, `.botao--secundario`, `.botao--perigo`, `.botao--sucesso`, `.botao--pequeno`, `.botao--compacto`, `.botao--cadastro`
+- **Conteúdo:** `.cartao`, `.cartao__titulo`, `.secao__titulo`, `.chips`, `.chip`, `.campo`, `.alerta`, `.texto-suave`, `.apenas-leitor`
+- **Estoque:** `.estoque-categorias`, `.estoque-modelos`, `.modelo-card`, `.modelo-modal`, `.estoque-confirmacao`
+- **Agenda:** `.agenda-calendario`, `.agenda-grade`, `.agenda-dia`, `.agenda-pedidos`, `.agenda-legenda`
+- **Pedido:** `.personalizacao`, `.pedido-preview`, `.adereco-card`, `.pontos-lista`
+- **Home e login:** `.home`, `.home-header`, `.login`
 
 #### Raiz de `src/`
 
@@ -326,12 +332,14 @@ Quando o conteúdo voltar, o ponto natural de entrada é cada arquivo em
 ## Padrões de interface
 
 - **Mobile-first e responsivo:** a coluna tem `402px` no celular e cresce em telas maiores (`520px` a partir de `480px`, `680px` a partir de `768px` e `820px` a partir de `1100px`), sempre centralizada. As grades usam `auto-fit`, então o número de colunas acompanha a largura.
-- **Alvos de toque:** em dispositivos com `pointer: coarse`, botões, chips e opções têm no mínimo `44px` de altura.
+- **Breakpoints:** a escala é `360 / 480 / 768 / 1100`. Use `min-width` para crescer e `max-width` só para ajustes abaixo do ponto (`359px`, `479px`, `767px`), nunca os dois no mesmo pixel. A escala está documentada no topo de `src/styles/global.css`.
+- **Alvos de toque:** em dispositivos com `pointer: coarse`, botões e chips têm no mínimo `44px` de altura. A exceção é `.botao--compacto` (28px, 32px em `pointer: coarse`), usada nas ações dos cards de estoque para o stepper e os botões caberem na mesma linha — inclusive em 320px.
 - **Espaçamentos fluidos:** `--espaco-lateral` e `--espaco-vertical` usam `clamp()` para acompanhar a largura da tela.
-- **Cores base (Estoque):** fundo `#FFEEE5`, botões `#B47C6B` com texto `#FFEEE5`.
+- **Cores base (Estoque):** fundo `#FFEEE5`, botões `#B47C6B` com texto `#FFEEE5`. As cores repetidas são tokens em `:root` (ex.: `--cor-perigo`, `--cor-texto-forte`, `--cor-titulo`, `--cor-borda-card`).
 - **Tipografia:** Inter para texto, Hubballi para títulos e assinaturas e, no catálogo da home, Meow Script (oferta), Host Grotesk (detalhes) e Hubot Sans (preço).
 - **Estados ativos:** sempre via `NavLink`, sem estado manual duplicado.
 - **Nomenclatura de classes:** padrão BEM simplificado (`bloco__elemento--modificador`).
+- **Classes mortas:** `npm run css:check` falha se o `global.css` tiver seletor sem uso em `src/`. Classes montadas por template string precisam ser registradas em `CLASSES_DINAMICAS` (`scripts/verificar-css.mjs`).
 
 ## Como adicionar uma nova tela
 
@@ -339,7 +347,7 @@ Quando o conteúdo voltar, o ponto natural de entrada é cada arquivo em
 2. Registre a rota em `src/App.tsx`, dentro do layout da área.
 3. Se for uma etapa do pedido, acrescente o item em `src/data/etapas.ts` e a rota filha em `/pedido/novo`.
 4. Reutilize as classes de `src/styles/global.css` em vez de criar CSS por tela.
-5. Rode `npm run lint` e `npm run build` antes de abrir o Pull Request.
+5. Rode `npm run lint`, `npm run build` e `npm run css:check` antes de abrir o Pull Request.
 
 ## Verificação
 
@@ -348,6 +356,8 @@ O projeto é validado com:
 ```bash
 npm run lint
 npm run build
+npm run css:check
 ```
 
-Os dois comandos devem terminar sem erros ou avisos antes de cada entrega.
+Os três comandos devem terminar sem erros antes de cada entrega. O `lint` ainda
+emite avisos antigos de `Agenda.tsx` e `Estoque.tsx` (`react(set-state-in-effect)`).

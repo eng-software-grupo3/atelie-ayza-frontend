@@ -422,8 +422,8 @@ function EstoqueItens({ tipo }: { tipo: TipoEstoque }) {
                     <button type="button" aria-label={`Retirar ${tecidos ? '1 metro do estoque de' : '1 unidade do estoque de'} ${item.nome}`} title="Retirar do estoque" disabled={salvandoItem !== null || item.quantidade < 1} onClick={() => void ajustarQuantidade(item, 'saida')}>−</button>
                   </div>
                   <div className="modelo-card__acoes">
-                    <button type="button" className={`botao botao--pequeno ${item.desabilitado ? 'botao--sucesso' : 'botao--perigo'}`} disabled={salvandoItem !== null} onClick={() => void alternarStatus(item)}>{item.desabilitado ? 'Habilitar' : 'Desabilitar'}</button>
-                    <button type="button" className="botao botao--pequeno botao--perigo" onClick={() => setItemParaExcluir(item)}>× Excluir</button>
+                    <button type="button" className={`botao botao--compacto ${item.desabilitado ? 'botao--sucesso' : 'botao--perigo'}`} disabled={salvandoItem !== null} onClick={() => void alternarStatus(item)}>{item.desabilitado ? 'Habilitar' : 'Desabilitar'}</button>
+                    <button type="button" className="botao botao--compacto botao--perigo" onClick={() => setItemParaExcluir(item)}>× Excluir</button>
                   </div>
                 </div>
               </div>
@@ -670,7 +670,7 @@ export function EstoqueModelos() {
                     <button type="button" aria-label={`Aumentar metragem de ${modelo.nome} em 1 metro`} title="Aumentar 1 metro" disabled={salvandoModelo !== null} onClick={() => void ajustarMetragem(modelo, 1)}>+</button>
                     <button type="button" aria-label={`Diminuir metragem de ${modelo.nome} em 1 metro`} title="Diminuir 1 metro" disabled={salvandoModelo !== null || Number(modelo.metragem_media_m) - 1 < 0.01} onClick={() => void ajustarMetragem(modelo, -1)}>−</button>
                   </div>
-                  <div className="modelo-card__acoes"><button className={`botao botao--pequeno ${modelo.habilitado ? 'botao--perigo' : 'botao--sucesso'}`} onClick={() => void habilitar(modelo)}>{modelo.habilitado ? 'Desabilitar' : 'Habilitar'}</button><button className="botao botao--pequeno botao--perigo" onClick={() => setModeloParaExcluir(modelo)}>× Excluir</button></div>
+                  <div className="modelo-card__acoes"><button className={`botao botao--compacto ${modelo.habilitado ? 'botao--perigo' : 'botao--sucesso'}`} onClick={() => void habilitar(modelo)}>{modelo.habilitado ? 'Desabilitar' : 'Habilitar'}</button><button className="botao botao--compacto botao--perigo" onClick={() => setModeloParaExcluir(modelo)}>× Excluir</button></div>
                 </div>
               </div>
             </article>

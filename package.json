@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "lint": "oxlint --type-aware src/",
+    "css:check": "node scripts/verificar-css.mjs",
     "format": "prettier --write ."
   },
   "dependencies": {
