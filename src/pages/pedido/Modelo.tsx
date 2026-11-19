@@ -10,7 +10,8 @@ type ModelosPorParte = {
 };
 
 export function Modelo() {
-  const { rascunho, setRascunho } = useOutletContext<ContextoPedido>();
+  const { rascunho, setRascunho, catalogos, setCatalogos } =
+    useOutletContext<ContextoPedido>();
   const [modelos, setModelos] = useState<ModelosPorParte>({ cima: [], baixo: [] });
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
@@ -19,7 +20,11 @@ export function Modelo() {
   useEffect(() => {
     let ativo = true;
 
-    void carregarModelos()
+    const carregar = catalogos.modelos
+      ? Promise.resolve(catalogos.modelos)
+      : carregarModelos();
+
+    void carregar
       .then((resposta) => {
         if (!ativo) return;
         const disponiveis = {
@@ -27,16 +32,17 @@ export function Modelo() {
           baixo: resposta.filter((modelo) => modelo.parte === 'BAIXO'),
         };
         setModelos(disponiveis);
+        setCatalogos((atuais) => ({ ...atuais, modelos: resposta }));
         setRascunho((atual) => ({
           ...atual,
-          modeloCima:
-            disponiveis.cima.find((modelo) => modelo.id === atual.modeloCima?.id) ??
-            disponiveis.cima[0] ??
-            null,
-          modeloBaixo:
-            disponiveis.baixo.find((modelo) => modelo.id === atual.modeloBaixo?.id) ??
-            disponiveis.baixo[0] ??
-            null,
+          cima: {
+            ...atual.cima,
+            id_modelo: atual.cima.id_modelo ?? disponiveis.cima[0]?.id ?? null,
+          },
+          baixo: {
+            ...atual.baixo,
+            id_modelo: atual.baixo.id_modelo ?? disponiveis.baixo[0]?.id ?? null,
+          },
         }));
       })
       .catch((e: unknown) => {
@@ -49,27 +55,32 @@ export function Modelo() {
     return () => {
       ativo = false;
     };
-  }, [setRascunho]);
+  }, [catalogos.modelos, setCatalogos, setRascunho]);
   /* oxlint-enable react(set-state-in-effect) */
 
-  const totalModelos = (rascunho.modeloCima?.valor ?? 0) + (rascunho.modeloBaixo?.valor ?? 0);
+  const modeloCima = modelos.cima.find((modelo) => modelo.id === rascunho.cima.id_modelo) ?? null;
+  const modeloBaixo = modelos.baixo.find((modelo) => modelo.id === rascunho.baixo.id_modelo) ?? null;
+  const tecido = catalogos.tecidos?.find((item) => item.id === rascunho.id_tecido) ?? null;
+  const totalModelos = Number(modeloCima?.valor ?? 0) + Number(modeloBaixo?.valor ?? 0);
 
   function selecionarModelo(modelo: ModeloCatalogo) {
-    const campo = modelo.parte === 'CIMA' ? 'modeloCima' : 'modeloBaixo';
+    const campo = modelo.parte === 'CIMA' ? 'cima' : 'baixo';
 
-    setRascunho((atual) => ({
-      ...atual,
-      [campo]: modelo,
-      // Os pontos são proporções da peça; ao trocar o modelo eles deixam de fazer sentido.
-      pontos:
-        atual[campo]?.id === modelo.id
-          ? atual.pontos
-          : atual.pontos.filter((ponto) => ponto.peca !== modelo.parte),
-    }));
+    setRascunho((atual) => {
+      const peca = atual[campo];
+      return {
+        ...atual,
+        [campo]: {
+          ...peca,
+          id_modelo: modelo.id,
+          aderecos: peca.id_modelo === modelo.id ? peca.aderecos : [],
+        },
+      };
+    });
   }
 
   function renderizarOpcoes(titulo: string, parte: 'CIMA' | 'BAIXO', opcoes: ModeloCatalogo[]) {
-    const selecionado = parte === 'CIMA' ? rascunho.modeloCima : rascunho.modeloBaixo;
+    const selecionado = parte === 'CIMA' ? modeloCima : modeloBaixo;
 
     return (
       <section className="personalizacao__grupo" aria-label={titulo}>
@@ -99,8 +110,9 @@ export function Modelo() {
   return (
     <div className="personalizacao">
       <PedidoPreview
-        modeloCima={rascunho.modeloCima}
-        modeloBaixo={rascunho.modeloBaixo}
+        modeloCima={modeloCima}
+        modeloBaixo={modeloBaixo}
+        tecido={tecido}
         carregando={carregando}
       />
       {erro && <p className="personalizacao__erro" role="alert">{erro}</p>}

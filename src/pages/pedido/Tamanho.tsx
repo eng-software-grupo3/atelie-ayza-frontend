@@ -5,7 +5,6 @@ import upload from '../../assets/upload.svg';
 import { PedidoPreview } from '../../components/PedidoPreview.tsx';
 import { TotaisPedido } from '../../components/TotaisPedido.tsx';
 import {
-  subtotalModeloTecido,
   tamanhos,
   type ContextoPedido,
   type TamanhoPeca,
@@ -14,18 +13,29 @@ import {
 const LIMITE_FOTO_BYTES = 5 * 1024 * 1024;
 
 export function Tamanho() {
-  const { rascunho, setRascunho } = useOutletContext<ContextoPedido>();
+  const { rascunho, setRascunho, catalogos } = useOutletContext<ContextoPedido>();
   const [erroFoto, setErroFoto] = useState('');
   const entradaFoto = useRef<HTMLInputElement>(null);
-  const { fotoReferencia, fotoPrevia } = rascunho;
+  const { fotoReferencia, fotoPrevia } = rascunho.local;
+  const modeloCima = catalogos.modelos?.find((modelo) =>
+    modelo.id === rascunho.cima.id_modelo && modelo.parte === 'CIMA') ?? null;
+  const modeloBaixo = catalogos.modelos?.find((modelo) =>
+    modelo.id === rascunho.baixo.id_modelo && modelo.parte === 'BAIXO') ?? null;
+  const tecido = catalogos.tecidos?.find((item) => item.id === rascunho.id_tecido) ?? null;
 
   // Sem modelo e tecido (acesso direto ou recarga) não há o que dimensionar.
-  if (!rascunho.modeloCima || !rascunho.modeloBaixo || !rascunho.tecido) {
+  if (!rascunho.cima.id_modelo || !rascunho.baixo.id_modelo) {
+    return <Navigate to="/pedido/novo/modelo" replace />;
+  }
+  if (!rascunho.id_tecido) {
+    return <Navigate to="/pedido/novo/tecido" replace />;
+  }
+  if (!modeloCima || !modeloBaixo || !tecido) {
     return <Navigate to="/pedido/novo/modelo" replace />;
   }
 
-  function escolherTamanho(campo: 'tamanhoCima' | 'tamanhoBaixo', tamanho: TamanhoPeca) {
-    setRascunho((atual) => ({ ...atual, [campo]: tamanho }));
+  function escolherTamanho(peca: 'cima' | 'baixo', tamanho: TamanhoPeca) {
+    setRascunho((atual) => ({ ...atual, [peca]: { ...atual[peca], tamanho } }));
   }
 
   function aoEscolherFoto(evento: ChangeEvent<HTMLInputElement>) {
@@ -47,8 +57,10 @@ export function Tamanho() {
     leitor.onload = () =>
       setRascunho((atual) => ({
         ...atual,
-        fotoReferencia: arquivo,
-        fotoPrevia: typeof leitor.result === 'string' ? leitor.result : null,
+        local: {
+          fotoReferencia: arquivo,
+          fotoPrevia: typeof leitor.result === 'string' ? leitor.result : null,
+        },
       }));
     leitor.onerror = () => setErroFoto('Não foi possível ler a foto.');
     leitor.readAsDataURL(arquivo);
@@ -56,10 +68,13 @@ export function Tamanho() {
 
   function removerFoto() {
     setErroFoto('');
-    setRascunho((atual) => ({ ...atual, fotoReferencia: null, fotoPrevia: null }));
+    setRascunho((atual) => ({
+      ...atual,
+      local: { fotoReferencia: null, fotoPrevia: null },
+    }));
   }
 
-  function renderizarTamanhos(titulo: string, campo: 'tamanhoCima' | 'tamanhoBaixo') {
+  function renderizarTamanhos(titulo: string, peca: 'cima' | 'baixo') {
     return (
       <section className="personalizacao__grupo" aria-label={titulo}>
         <h2 className="personalizacao__grupo-titulo">{titulo}</h2>
@@ -69,8 +84,8 @@ export function Tamanho() {
               className="personalizacao__tamanho"
               type="button"
               key={tamanho}
-              aria-pressed={rascunho[campo] === tamanho}
-              onClick={() => escolherTamanho(campo, tamanho)}
+              aria-pressed={rascunho[peca].tamanho === tamanho}
+              onClick={() => escolherTamanho(peca, tamanho)}
             >
               {tamanho}
             </button>
@@ -80,19 +95,20 @@ export function Tamanho() {
     );
   }
 
-  const subtotal = subtotalModeloTecido(rascunho);
+  const subtotal =
+    Number(modeloCima.valor) + Number(modeloBaixo.valor) + Number(tecido.preco_metro);
 
   return (
     <div className="personalizacao">
       <PedidoPreview
-        modeloCima={rascunho.modeloCima}
-        modeloBaixo={rascunho.modeloBaixo}
-        tecido={rascunho.tecido}
+        modeloCima={modeloCima}
+        modeloBaixo={modeloBaixo}
+        tecido={tecido}
       />
       <div className="personalizacao__conteudo">
         <h1 className="apenas-leitor">Escolha os tamanhos</h1>
-        {renderizarTamanhos('Tamanho do top', 'tamanhoCima')}
-        {renderizarTamanhos('Tamanho da calcinha', 'tamanhoBaixo')}
+        {renderizarTamanhos('Tamanho do top', 'cima')}
+        {renderizarTamanhos('Tamanho da calcinha', 'baixo')}
 
         <section className="personalizacao__grupo" aria-label="Foto de referência">
           <h2 className="personalizacao__grupo-titulo personalizacao__grupo-titulo--icone">
@@ -151,9 +167,9 @@ export function Tamanho() {
             rows={2}
             maxLength={500}
             placeholder="Observações de caimento (ex: prefiro mais justo no top)"
-            value={rascunho.observacoes}
+            value={rascunho.observacao}
             onChange={(evento) =>
-              setRascunho((atual) => ({ ...atual, observacoes: evento.target.value }))
+              setRascunho((atual) => ({ ...atual, observacao: evento.target.value }))
             }
           />
         </section>

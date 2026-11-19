@@ -5,10 +5,9 @@ import { TotaisPedido } from '../../components/TotaisPedido.tsx';
 import {
   coresDosAderecos,
   formatarMoeda,
-  subtotalModeloTecido,
-  totalAderecos,
   type ContextoPedido,
   type ParteDaPeca,
+  type PontoAdereco,
 } from '../../data/pedido.ts';
 import {
   carregarAderecos,
@@ -19,7 +18,8 @@ import {
 const estiloCor = (cor: string) => ({ '--cor-adereco': cor }) as CSSProperties;
 
 export function Aderecos() {
-  const { rascunho, setRascunho } = useOutletContext<ContextoPedido>();
+  const { rascunho, setRascunho, catalogos, setCatalogos } =
+    useOutletContext<ContextoPedido>();
   const [aderecos, setAderecos] = useState<AderecoCatalogo[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
@@ -31,17 +31,15 @@ export function Aderecos() {
   useEffect(() => {
     let ativo = true;
 
-    void carregarAderecos()
+    const carregar = catalogos.aderecos
+      ? Promise.resolve(catalogos.aderecos)
+      : carregarAderecos();
+
+    void carregar
       .then((lista) => {
         if (!ativo) return;
         setAderecos(lista);
-        // Descarta pontos de adereços que saíram do catálogo desde a última visita.
-        setRascunho((atual) => ({
-          ...atual,
-          pontos: atual.pontos.filter((ponto) =>
-            lista.some((adereco) => adereco.id === ponto.adereco.id),
-          ),
-        }));
+        setCatalogos((atuais) => ({ ...atuais, aderecos: lista }));
       })
       .catch((e: unknown) => {
         if (ativo)
@@ -54,7 +52,7 @@ export function Aderecos() {
     return () => {
       ativo = false;
     };
-  }, [setRascunho]);
+  }, [catalogos.aderecos, setCatalogos]);
   /* oxlint-enable react(set-state-in-effect) */
 
   const coresPorId = useMemo(
@@ -70,24 +68,61 @@ export function Aderecos() {
 
   const corDe = (aderecoId: string) => coresPorId.get(aderecoId) ?? coresDosAderecos[0];
 
+  const pontos = useMemo(() => {
+    const pontosDaPeca = (peca: ParteDaPeca): PontoAdereco[] => {
+      const campo = peca === 'CIMA' ? 'cima' : 'baixo';
+      return rascunho[campo].aderecos.flatMap((aplicado, indice) => {
+        const adereco = aderecos.find((item) => item.id === aplicado.id_adereco);
+        if (!adereco) return [];
+        return [{
+          id: `${peca}:${indice}`,
+          adereco,
+          cor: corDe(adereco.id),
+          peca,
+          x: aplicado.coordenada_x,
+          y: aplicado.coordenada_y,
+        }];
+      });
+    };
+    return [...pontosDaPeca('CIMA'), ...pontosDaPeca('BAIXO')];
+  }, [aderecos, coresPorId, rascunho]);
+
+  const ausentes = useMemo(
+    () => (['cima', 'baixo'] as const).flatMap((campo) =>
+      rascunho[campo].aderecos.flatMap((aplicado, indice) =>
+        aderecos.some((item) => item.id === aplicado.id_adereco)
+          ? []
+          : [{ id: `${campo === 'cima' ? 'CIMA' : 'BAIXO'}:${indice}`, nome: aplicado.id_adereco }],
+      ),
+    ),
+    [aderecos, rascunho],
+  );
+
   const grupos = useMemo(() => {
     const porAdereco = new Map<
       string,
       { adereco: AderecoCatalogo; cor: string; quantidade: number }
     >();
-    for (const ponto of rascunho.pontos) {
+    for (const ponto of pontos) {
       const grupo = porAdereco.get(ponto.adereco.id);
       if (grupo) grupo.quantidade += 1;
       else
         porAdereco.set(ponto.adereco.id, { adereco: ponto.adereco, cor: ponto.cor, quantidade: 1 });
     }
     return [...porAdereco.values()];
-  }, [rascunho.pontos]);
+  }, [pontos]);
 
   // Sem modelo e tecido (acesso direto ou recarga) não há peça para marcar.
-  if (!rascunho.modeloCima || !rascunho.modeloBaixo || !rascunho.tecido) {
+  if (!rascunho.cima.id_modelo || !rascunho.baixo.id_modelo) {
     return <Navigate to="/pedido/novo/modelo" replace />;
   }
+  if (!rascunho.id_tecido) return <Navigate to="/pedido/novo/tecido" replace />;
+
+  const modeloCima = catalogos.modelos?.find((modelo) =>
+    modelo.id === rascunho.cima.id_modelo && modelo.parte === 'CIMA') ?? null;
+  const modeloBaixo = catalogos.modelos?.find((modelo) =>
+    modelo.id === rascunho.baixo.id_modelo && modelo.parte === 'BAIXO') ?? null;
+  const tecido = catalogos.tecidos?.find((item) => item.id === rascunho.id_tecido) ?? null;
 
   function selecionar(adereco: AderecoCatalogo) {
     setAviso('');
@@ -111,38 +146,47 @@ export function Aderecos() {
     setAviso('');
     setRascunho((atual) => ({
       ...atual,
-      pontos: [
-        ...atual.pontos,
-        {
-          id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-          adereco,
-          cor: corDe(adereco.id),
-          peca,
-          x,
-          y,
-        },
-      ],
+      [peca === 'CIMA' ? 'cima' : 'baixo']: {
+        ...atual[peca === 'CIMA' ? 'cima' : 'baixo'],
+        aderecos: [
+          ...atual[peca === 'CIMA' ? 'cima' : 'baixo'].aderecos,
+          { id_adereco: adereco.id, coordenada_x: x, coordenada_y: y },
+        ],
+      },
     }));
   }
 
   function remover(pontoId: string) {
     setPontoSelecionadoId(null);
+    const [parte, indice] = pontoId.split(':');
+    const campo = parte === 'CIMA' ? 'cima' : 'baixo';
+    const indicePonto = Number(indice);
+    if (!Number.isInteger(indicePonto)) return;
     setRascunho((atual) => ({
       ...atual,
-      pontos: atual.pontos.filter((ponto) => ponto.id !== pontoId),
+      [campo]: {
+        ...atual[campo],
+        aderecos: atual[campo].aderecos.filter((_, atualIndice) => atualIndice !== indicePonto),
+      },
     }));
   }
 
-  const subtotal = subtotalModeloTecido(rascunho);
-  const valorAderecos = totalAderecos(rascunho.pontos);
+  const subtotal =
+    Number(modeloCima?.valor ?? 0) +
+    Number(modeloBaixo?.valor ?? 0) +
+    Number(tecido?.preco_metro ?? 0);
+  const valorAderecos = grupos.reduce(
+    (total, grupo) => total + Number(grupo.adereco.preco) * grupo.quantidade,
+    0,
+  );
 
   return (
     <div className="personalizacao">
       <PedidoPreview
-        modeloCima={rascunho.modeloCima}
-        modeloBaixo={rascunho.modeloBaixo}
-        tecido={rascunho.tecido}
-        pontos={rascunho.pontos}
+        modeloCima={modeloCima}
+        modeloBaixo={modeloBaixo}
+        tecido={tecido}
+        pontos={pontos}
         onMarcar={marcar}
         pontoSelecionadoId={pontoSelecionadoId}
         onSelecionarPonto={setPontoSelecionadoId}
@@ -182,7 +226,7 @@ export function Aderecos() {
                   key={adereco.id}
                   style={estiloCor(corDe(adereco.id))}
                   aria-pressed={ativoId === adereco.id}
-                  data-com-pontos={rascunho.pontos.some((ponto) => ponto.adereco.id === adereco.id)}
+                  data-com-pontos={pontos.some((ponto) => ponto.adereco.id === adereco.id)}
                   onClick={() => selecionar(adereco)}
                 >
                   <span className="adereco-card__foto">
@@ -203,23 +247,37 @@ export function Aderecos() {
 
         <section className="personalizacao__grupo personalizacao__grupo--pontos">
           <h2 className="personalizacao__grupo-titulo">
-            Pontos marcados na peça: {rascunho.pontos.length}
+            Pontos marcados na peça: {pontos.length + ausentes.length}
           </h2>
-          {rascunho.pontos.length === 0 ? (
+          {pontos.length + ausentes.length === 0 ? (
             <p className="personalizacao__vazio">Nenhum ponto marcado ainda.</p>
           ) : (
-            <ul className="pontos-lista">
-              {grupos.map(({ adereco, cor, quantidade }) => (
-                <li className="pontos-lista__item" key={adereco.id} style={estiloCor(cor)}>
-                  <span className="pontos-lista__nome">
-                    <span className="pontos-lista__cor" aria-hidden="true" />
-                    {adereco.nome}
-                    <span className="pontos-lista__quantidade">{quantidade}x</span>
-                  </span>
-                  <strong>{formatarMoeda(Number(adereco.preco) * quantidade)}</strong>
-                </li>
-              ))}
-            </ul>
+            <>
+              <ul className="pontos-lista">
+                {grupos.map(({ adereco, cor, quantidade }) => (
+                  <li className="pontos-lista__item" key={adereco.id} style={estiloCor(cor)}>
+                    <span className="pontos-lista__nome">
+                      <span className="pontos-lista__cor" aria-hidden="true" />
+                      {adereco.nome}
+                      <span className="pontos-lista__quantidade">{quantidade}x</span>
+                    </span>
+                    <strong>{formatarMoeda(Number(adereco.preco) * quantidade)}</strong>
+                  </li>
+                ))}
+              </ul>
+              {ausentes.length > 0 && (
+                <div className="personalizacao__erro" role="alert">
+                  {ausentes.map((item) => (
+                    <p key={item.id}>
+                      Um adereço não está mais disponível.{' '}
+                      <button type="button" onClick={() => remover(item.id)}>
+                        Remover
+                      </button>
+                    </p>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </section>
 

@@ -6,12 +6,12 @@ import {
   carregarModelos,
   carregarTecidos,
   urlDaImagemCatalogo,
-  type ModeloCatalogo,
   type TecidoCatalogo,
 } from '../../services/catalogo.ts';
 
 export function Tecido() {
-  const { rascunho, setRascunho } = useOutletContext<ContextoPedido>();
+  const { rascunho, setRascunho, catalogos, setCatalogos } =
+    useOutletContext<ContextoPedido>();
   const [tecidos, setTecidos] = useState<TecidoCatalogo[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
@@ -20,18 +20,25 @@ export function Tecido() {
   useEffect(() => {
     let ativo = true;
 
-    void Promise.all([carregarModelos(), carregarTecidos()])
+    const modelosPromise = catalogos.modelos
+      ? Promise.resolve(catalogos.modelos)
+      : carregarModelos();
+    const tecidosPromise = catalogos.tecidos
+      ? Promise.resolve(catalogos.tecidos)
+      : carregarTecidos();
+
+    void Promise.all([modelosPromise, tecidosPromise])
       .then(([modelos, tecidosDisponiveis]) => {
         if (!ativo) return;
         setTecidos(tecidosDisponiveis);
+        setCatalogos((atuais) => ({
+          ...atuais,
+          modelos,
+          tecidos: tecidosDisponiveis,
+        }));
         setRascunho((atual) => ({
           ...atual,
-          modeloCima: encontrarModelo(modelos, atual.modeloCima, 'CIMA'),
-          modeloBaixo: encontrarModelo(modelos, atual.modeloBaixo, 'BAIXO'),
-          tecido:
-            tecidosDisponiveis.find((tecido) => tecido.id === atual.tecido?.id) ??
-            tecidosDisponiveis[0] ??
-            null,
+          id_tecido: atual.id_tecido ?? tecidosDisponiveis[0]?.id ?? null,
         }));
       })
       .catch((e: unknown) => {
@@ -46,19 +53,24 @@ export function Tecido() {
     return () => {
       ativo = false;
     };
-  }, [setRascunho]);
+  }, [catalogos.modelos, catalogos.tecidos, setCatalogos, setRascunho]);
   /* oxlint-enable react(set-state-in-effect) */
 
+  const modeloCima = catalogos.modelos?.find((modelo) =>
+    modelo.id === rascunho.cima.id_modelo && modelo.parte === 'CIMA') ?? null;
+  const modeloBaixo = catalogos.modelos?.find((modelo) =>
+    modelo.id === rascunho.baixo.id_modelo && modelo.parte === 'BAIXO') ?? null;
+  const tecidoSelecionado = tecidos.find((tecido) => tecido.id === rascunho.id_tecido) ?? null;
   const subtotalAnterior =
-    (rascunho.modeloCima?.valor ?? 0) + (rascunho.modeloBaixo?.valor ?? 0);
-  const valorTecido = Number(rascunho.tecido?.preco_metro ?? 0);
+    Number(modeloCima?.valor ?? 0) + Number(modeloBaixo?.valor ?? 0);
+  const valorTecido = Number(tecidoSelecionado?.preco_metro ?? 0);
 
   return (
     <div className="personalizacao">
       <PedidoPreview
-        modeloCima={rascunho.modeloCima}
-        modeloBaixo={rascunho.modeloBaixo}
-        tecido={rascunho.tecido}
+        modeloCima={modeloCima}
+        modeloBaixo={modeloBaixo}
+        tecido={tecidoSelecionado}
         carregando={carregando}
       />
       {erro && <p className="personalizacao__erro" role="alert">{erro}</p>}
@@ -77,8 +89,8 @@ export function Tecido() {
                   className="personalizacao__opcao personalizacao__opcao--tecido"
                   type="button"
                   key={tecido.id}
-                  aria-pressed={rascunho.tecido?.id === tecido.id}
-                  onClick={() => setRascunho((atual) => ({ ...atual, tecido }))}
+                  aria-pressed={rascunho.id_tecido === tecido.id}
+                  onClick={() => setRascunho((atual) => ({ ...atual, id_tecido: tecido.id }))}
                 >
                   {tecido.foto ? (
                     <img
@@ -115,13 +127,4 @@ export function Tecido() {
       </div>
     </div>
   );
-}
-
-function encontrarModelo(
-  modelos: ModeloCatalogo[],
-  atual: ModeloCatalogo | null,
-  parte: ModeloCatalogo['parte'],
-): ModeloCatalogo | null {
-  const disponiveis = modelos.filter((modelo) => modelo.parte === parte);
-  return disponiveis.find((modelo) => modelo.id === atual?.id) ?? disponiveis[0] ?? null;
 }
