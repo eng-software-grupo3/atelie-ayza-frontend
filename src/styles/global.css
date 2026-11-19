@@ -1723,8 +1723,8 @@ a.botao--secundario:hover {
   transform: translate(-50%, -50%);
   border: 1px solid #fff;
   border-radius: 50%;
-  background: var(--cor-destaque-escuro);
-  box-shadow: 0 0 0 1px var(--cor-destaque-escuro);
+  background: var(--cor-adereco, var(--cor-destaque-escuro));
+  box-shadow: 0 0 0 1px var(--cor-adereco, var(--cor-destaque-escuro));
 }
 
 .resumo-peca figcaption {
@@ -1738,6 +1738,11 @@ a.botao--secundario:hover {
   font-size: 9px;
   text-align: left;
   text-overflow: ellipsis;
+}
+
+.resumo-peca > .resumo-peca__erro-tecido {
+  color: var(--cor-erro);
+  font-size: 8px;
 }
 
 .resumo-conjunto__detalhes {
@@ -1762,17 +1767,43 @@ a.botao--secundario:hover {
   overflow-wrap: anywhere;
 }
 
+.resumo-conjunto__detalhes > .resumo-conjunto__referencia {
+  grid-template-columns: 76px minmax(0, 1fr);
+  align-items: center;
+  padding: 8px;
+  border: 1px solid #d59a87;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.resumo-conjunto__referencia dt {
+  grid-column: 2;
+  grid-row: 1;
+  text-align: center;
+}
+
+.resumo-conjunto__referencia dd {
+  grid-column: 1;
+  grid-row: 1;
+}
+
 .resumo-conjunto__foto {
   display: block;
-  width: 56px;
-  height: 56px;
+  width: 72px;
+  height: 72px;
   border: 1px solid var(--cor-borda-suave);
   border-radius: 7px;
-  object-fit: cover;
+  background: #fffaf7;
+  object-fit: contain;
 }
 
 .resumo-conjunto__sem-foto {
+  display: grid;
+  min-height: 72px;
+  place-items: center;
   color: var(--cor-texto-suave);
+  font-size: 9px;
+  text-align: center;
 }
 
 .resumo-conjunto__aderecos {
@@ -1783,14 +1814,30 @@ a.botao--secundario:hover {
 
 .resumo-conjunto__aderecos li {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 6px;
 }
 
-.resumo-conjunto__aderecos span {
+.resumo-conjunto__aderecos li > span:last-child {
   flex: 0 0 auto;
   color: var(--cor-texto-suave);
+}
+
+.resumo-conjunto__adereco-nome {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.resumo-conjunto__adereco-cor {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+  background: var(--cor-adereco);
+  box-shadow: 0 0 0 1px rgba(67, 47, 41, 0.18);
 }
 
 .resumo-pedido__novo {

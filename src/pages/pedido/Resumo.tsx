@@ -6,11 +6,17 @@ import type {
   ContextoPedido,
   ConjuntoRascunho,
 } from '../../data/pedido.ts';
-import { formatarCentavos, subtotalPedidoCentavos } from '../../data/pedido.ts';
 import {
+  coresDosAderecos,
+  formatarCentavos,
+  subtotalPedidoCentavos,
+} from '../../data/pedido.ts';
+import {
+  aplicarTecidoNoModelo,
   carregarAderecos,
   carregarModelos,
   carregarTecidos,
+  urlDaImagemCatalogo,
   type AderecoCatalogo,
   type ModeloCatalogo,
   type TecidoCatalogo,
@@ -33,20 +39,91 @@ function srcModelo(svg: string): string {
     : `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
+async function carregarSvgModelo(svg: string): Promise<string> {
+  if (!/^https?:\/\//i.test(svg) && !svg.startsWith('/')) return svg;
+
+  const resposta = await fetch(urlDaImagemCatalogo(svg));
+  if (!resposta.ok) throw new Error('Não foi possível carregar o modelo para aplicar o tecido.');
+  return resposta.text();
+}
+
+function corDoAdereco(id: string, aderecos: AderecoCatalogo[]): string {
+  const indice = aderecos.findIndex((adereco) => adereco.id === id);
+  return indice < 0 ? coresDosAderecos[0] : coresDosAderecos[indice % coresDosAderecos.length];
+}
+
 function PreviewPeca({
   modelo,
   aplicados,
   aderecos,
+  tecido,
   rotulo,
   tamanho,
 }: {
   modelo: ModeloCatalogo;
   aplicados: AderecoAplicado[];
   aderecos: AderecoCatalogo[];
+  tecido: TecidoCatalogo;
   rotulo: string;
   tamanho: string;
 }) {
   const [proporcao, setProporcao] = useState(1.4);
+  const [resultadoTecido, setResultadoTecido] = useState<{
+    modeloSvg: string;
+    fotoTecido: string;
+    src?: string;
+    erro?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    let ativo = true;
+    const { foto } = tecido;
+
+    if (!foto) {
+      return () => {
+        ativo = false;
+      };
+    }
+
+    const imagem = new Image();
+    imagem.crossOrigin = 'anonymous';
+    imagem.onload = () => {
+      void (async () => {
+        try {
+          const svgModelo = await carregarSvgModelo(modelo.svg_url);
+          const src = await aplicarTecidoNoModelo(svgModelo, imagem);
+          if (ativo) setResultadoTecido({ modeloSvg: modelo.svg_url, fotoTecido: foto, src });
+        } catch (erro: unknown) {
+          if (ativo) {
+            setResultadoTecido({
+              modeloSvg: modelo.svg_url,
+              fotoTecido: foto,
+              erro:
+                erro instanceof Error
+                  ? erro.message
+                  : 'Não foi possível aplicar o tecido à prévia.',
+            });
+          }
+        }
+      })();
+    };
+    imagem.onerror = () => {
+      if (ativo) {
+        setResultadoTecido({
+          modeloSvg: modelo.svg_url,
+          fotoTecido: foto,
+          erro: 'Não foi possível carregar a imagem do tecido selecionado.',
+        });
+      }
+    };
+    imagem.src = urlDaImagemCatalogo(foto);
+
+    return () => {
+      ativo = false;
+      imagem.onload = null;
+      imagem.onerror = null;
+    };
+  }, [modelo.svg_url, tecido.foto]);
 
   function atualizarProporcao(evento: SyntheticEvent<HTMLImageElement>) {
     const { naturalWidth, naturalHeight } = evento.currentTarget;
@@ -55,19 +132,31 @@ function PreviewPeca({
     }
   }
 
+  const srcTecido =
+    resultadoTecido?.modeloSvg === modelo.svg_url &&
+    resultadoTecido.fotoTecido === tecido.foto
+      ? resultadoTecido.src
+      : null;
+  const erroTecido =
+    resultadoTecido?.modeloSvg === modelo.svg_url &&
+    resultadoTecido.fotoTecido === tecido.foto
+      ? resultadoTecido.erro
+      : null;
+
   return (
     <figure className="resumo-peca">
       <div className="resumo-peca__imagem" style={{ aspectRatio: String(proporcao) }}>
         <img
-          src={srcModelo(modelo.svg_url)}
+          src={srcTecido ?? srcModelo(modelo.svg_url)}
           alt={`${rotulo}: ${modelo.nome}`}
           onLoad={atualizarProporcao}
         />
         {aplicados.map((aplicado, indice) => {
           const adereco = aderecos.find((item) => item.id === aplicado.id_adereco);
-          const posicao: CSSProperties = {
+          const posicao: CSSProperties & { '--cor-adereco': string } = {
             left: `${aplicado.coordenada_x * 100}%`,
             top: `${aplicado.coordenada_y * 100}%`,
+            '--cor-adereco': corDoAdereco(aplicado.id_adereco, aderecos),
           };
           return (
             <span
@@ -80,6 +169,11 @@ function PreviewPeca({
           );
         })}
       </div>
+      {tecido.foto && erroTecido && (
+        <p className="resumo-peca__erro-tecido" role="status">
+          Prévia sem estampa: {erroTecido}
+        </p>
+      )}
       <figcaption>{rotulo} · tamanho {tamanho}</figcaption>
       <p>{modelo.nome}</p>
     </figure>
@@ -89,14 +183,20 @@ function PreviewPeca({
 function agruparAderecos(
   aplicados: AderecoAplicado[],
   catalogo: AderecoCatalogo[],
-): { nome: string; quantidade: number }[] {
-  const grupos = new Map<string, { nome: string; quantidade: number }>();
+): { nome: string; quantidade: number; cor: string }[] {
+  const grupos = new Map<string, { nome: string; quantidade: number; cor: string }>();
   for (const aplicado of aplicados) {
     const adereco = catalogo.find((item) => item.id === aplicado.id_adereco);
     if (!adereco) continue;
     const grupo = grupos.get(adereco.nome);
     if (grupo) grupo.quantidade += 1;
-    else grupos.set(adereco.nome, { nome: adereco.nome, quantidade: 1 });
+    else {
+      grupos.set(adereco.nome, {
+        nome: adereco.nome,
+        quantidade: 1,
+        cor: corDoAdereco(adereco.id, catalogo),
+      });
+    }
   }
   return [...grupos.values()];
 }
@@ -131,6 +231,7 @@ export function CardConjuntoResumo({
           modelo={modeloCima}
           aplicados={conjunto.cima.aderecos}
           aderecos={aderecos}
+          tecido={tecido}
           rotulo="TOP"
           tamanho={conjunto.cima.tamanho}
         />
@@ -138,6 +239,7 @@ export function CardConjuntoResumo({
           modelo={modeloBaixo}
           aplicados={conjunto.baixo.aderecos}
           aderecos={aderecos}
+          tecido={tecido}
           rotulo="CALCINHA"
           tamanho={conjunto.baixo.tamanho}
         />
@@ -148,8 +250,8 @@ export function CardConjuntoResumo({
           <dt>Malha</dt>
           <dd>{tecido.nome}</dd>
         </div>
-        <div>
-          <dt>Foto de referência de medidas</dt>
+        <div className="resumo-conjunto__referencia">
+          <dt>Foto de referência das medidas</dt>
           <dd>
             {conjunto.local.fotoPrevia ? (
               <img
@@ -173,7 +275,17 @@ export function CardConjuntoResumo({
               <ul className="resumo-conjunto__aderecos">
                 {gruposAderecos.map((grupo, indice) => (
                   <li key={`${grupo.nome}-${indice}`}>
-                    {grupo.nome} <span>{grupo.quantidade} {grupo.quantidade === 1 ? 'unidade' : 'unidades'}</span>
+                    <span className="resumo-conjunto__adereco-nome">
+                      <span
+                        className="resumo-conjunto__adereco-cor"
+                        style={{ '--cor-adereco': grupo.cor } as CSSProperties}
+                        aria-hidden="true"
+                      />
+                      {grupo.nome}
+                    </span>
+                    <span>
+                      {grupo.quantidade} {grupo.quantidade === 1 ? 'unidade' : 'unidades'}
+                    </span>
                   </li>
                 ))}
               </ul>
