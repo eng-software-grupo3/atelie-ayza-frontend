@@ -21,6 +21,7 @@ type Props = {
   modeloBaixo: ModeloCatalogo | null;
   tecido?: TecidoCatalogo | null;
   carregando?: boolean;
+  compacto?: boolean;
   pontos?: PontoAdereco[];
   /** Recebe a posição do toque como proporção (0 a 1) da peça. */
   onMarcar?: (peca: ParteDaPeca, x: number, y: number) => void;
@@ -137,6 +138,7 @@ export function PedidoPreview({
   modeloBaixo,
   tecido = null,
   carregando = false,
+  compacto = false,
   pontos = [],
   onMarcar,
   pontoSelecionadoId,
@@ -216,7 +218,10 @@ export function PedidoPreview({
   }, [erroTecido, modeloBaixo, modeloCima, previaTecido, tecido]);
 
   return (
-    <figure className="pedido-preview" aria-label="Prévia do conjunto">
+    <figure
+      className={`pedido-preview${compacto ? ' pedido-preview--compacto' : ''}`}
+      aria-label="Prévia do conjunto"
+    >
       <div className="pedido-preview__moldura">
         <div className="pedido-preview__pecas">
           {modeloCima ? (

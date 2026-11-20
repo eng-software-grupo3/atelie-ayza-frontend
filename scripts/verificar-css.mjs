@@ -10,8 +10,7 @@
  *
  * Sai com código 1 quando encontra classe sem uso, para servir de porteiro no
  * CI. Classes montadas em tempo de execução (template strings) precisam estar
- * na lista `CLASSES_DINAMICAS` abaixo. Classes usadas só em arquivos que não
- * existem nesta branch vão em `CLASSES_EXTERNAS`.
+ * na lista `CLASSES_DINAMICAS` abaixo.
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -31,22 +30,6 @@ const CLASSES_DINAMICAS = [
   {
     padrao: /^agenda-dia--(bloqueada|com_entrega)$/,
     motivo: 'montadas em Agenda.tsx com `agenda-dia--${estado}`',
-  },
-];
-
-/**
- * Classes usadas só por arquivos que não existem nesta branch. O `global.css`
- * é o mesmo em todas as branches, então apagar estas regras aqui quebraria a
- * página que as usa na `configMobile`.
- */
-const CLASSES_EXTERNAS = [
-  {
-    padrao: /^cartao__titulo$/,
-    motivo: 'usada em src/pages/dev/MobileAccess.tsx (branch configMobile)',
-  },
-  {
-    padrao: /^chips?$/,
-    motivo: 'usadas em src/pages/dev/MobileAccess.tsx (branch configMobile)',
   },
 ];
 
@@ -81,8 +64,8 @@ function estaEmUso(classe, fonte) {
   return padrao.test(fonte);
 }
 
-function ehExcecao(classe) {
-  return [...CLASSES_DINAMICAS, ...CLASSES_EXTERNAS].some(({ padrao }) => padrao.test(classe));
+function ehDinamica(classe) {
+  return CLASSES_DINAMICAS.some(({ padrao }) => padrao.test(classe));
 }
 
 const css = readFileSync(CSS, 'utf8');
@@ -90,7 +73,7 @@ const fontes = listarFontes(FONTES);
 const fonte = fontes.map((arquivo) => readFileSync(arquivo, 'utf8')).join('\n');
 
 const classes = classesDoCss(css);
-const semUso = classes.filter((classe) => !ehExcecao(classe) && !estaEmUso(classe, fonte));
+const semUso = classes.filter((classe) => !ehDinamica(classe) && !estaEmUso(classe, fonte));
 
 const caminhoCss = relative(RAIZ, CSS).replaceAll('\\', '/');
 console.log(`${caminhoCss}: ${classes.length} classes, ${fontes.length} arquivos varridos.`);
@@ -103,8 +86,7 @@ if (semUso.length === 0) {
 console.error(`\n${semUso.length} classe(s) sem uso em src/:\n`);
 for (const classe of semUso) console.error(`  .${classe}`);
 console.error(
-  '\nRemova os seletores mortos ou registre a classe em CLASSES_DINAMICAS' +
-    ' (montada por template string) ou CLASSES_EXTERNAS (usada em outra branch),' +
-    ' em scripts/verificar-css.mjs.',
+  '\nRemova os seletores mortos ou, se a classe é montada por template string,' +
+    ' registre-a em CLASSES_DINAMICAS (scripts/verificar-css.mjs).',
 );
 process.exit(1);

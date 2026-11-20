@@ -3,17 +3,17 @@ import {
   useRef,
   useState,
   type CSSProperties,
-  type SyntheticEvent,
 } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import { PedidoPreview } from '../../components/PedidoPreview.tsx';
 import { TotaisPedido } from '../../components/TotaisPedido.tsx';
-import { useContainedImageArea } from '../../hooks/useContainedImageArea.ts';
 import type {
   AderecoAplicado,
   CatalogosPedido,
   ContextoPedido,
   ConjuntoRascunho,
   ParteDaPeca,
+  PontoAdereco,
 } from '../../data/pedido.ts';
 import {
   coresDosAderecos,
@@ -21,11 +21,9 @@ import {
   subtotalPedidoCentavos,
 } from '../../data/pedido.ts';
 import {
-  aplicarTecidoNoModelo,
   carregarAderecos,
   carregarModelos,
   carregarTecidos,
-  urlDaImagemCatalogo,
   type AderecoCatalogo,
   type ModeloCatalogo,
   type TecidoCatalogo,
@@ -42,155 +40,9 @@ type PropsCardConjunto = {
   onAlterar: () => void;
 };
 
-function srcModelo(svg: string): string {
-  return /^https?:\/\//i.test(svg) || svg.startsWith('/')
-    ? svg
-    : `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
-}
-
-async function carregarSvgModelo(svg: string): Promise<string> {
-  if (!/^https?:\/\//i.test(svg) && !svg.startsWith('/')) return svg;
-
-  const resposta = await fetch(urlDaImagemCatalogo(svg));
-  if (!resposta.ok) throw new Error('Não foi possível carregar o modelo para aplicar o tecido.');
-  return resposta.text();
-}
-
 function corDoAdereco(id: string, aderecos: AderecoCatalogo[]): string {
   const indice = aderecos.findIndex((adereco) => adereco.id === id);
   return indice < 0 ? coresDosAderecos[0] : coresDosAderecos[indice % coresDosAderecos.length];
-}
-
-function PreviewPeca({
-  modelo,
-  aplicados,
-  aderecos,
-  tecido,
-  parte,
-  rotulo,
-}: {
-  modelo: ModeloCatalogo;
-  aplicados: AderecoAplicado[];
-  aderecos: AderecoCatalogo[];
-  tecido: TecidoCatalogo;
-  parte: ParteDaPeca;
-  rotulo: string;
-}) {
-  const [proporcao, setProporcao] = useState<number | null>(null);
-  const { ref: caixaRef, estilo: estiloArea } = useContainedImageArea(proporcao);
-  const [resultadoTecido, setResultadoTecido] = useState<{
-    modeloSvg: string;
-    fotoTecido: string;
-    src?: string;
-    erro?: string;
-  } | null>(null);
-
-  useEffect(() => {
-    let ativo = true;
-    const { foto } = tecido;
-
-    if (!foto) {
-      return () => {
-        ativo = false;
-      };
-    }
-
-    const imagem = new Image();
-    imagem.crossOrigin = 'anonymous';
-    imagem.onload = () => {
-      void (async () => {
-        try {
-          const svgModelo = await carregarSvgModelo(modelo.svg_url);
-          const src = await aplicarTecidoNoModelo(svgModelo, imagem);
-          if (ativo) setResultadoTecido({ modeloSvg: modelo.svg_url, fotoTecido: foto, src });
-        } catch (erro: unknown) {
-          if (ativo) {
-            setResultadoTecido({
-              modeloSvg: modelo.svg_url,
-              fotoTecido: foto,
-              erro:
-                erro instanceof Error
-                  ? erro.message
-                  : 'Não foi possível aplicar o tecido à prévia.',
-            });
-          }
-        }
-      })();
-    };
-    imagem.onerror = () => {
-      if (ativo) {
-        setResultadoTecido({
-          modeloSvg: modelo.svg_url,
-          fotoTecido: foto,
-          erro: 'Não foi possível carregar a imagem do tecido selecionado.',
-        });
-      }
-    };
-    imagem.src = urlDaImagemCatalogo(foto);
-
-    return () => {
-      ativo = false;
-      imagem.onload = null;
-      imagem.onerror = null;
-    };
-  }, [modelo.svg_url, tecido.foto]);
-
-  function atualizarProporcao(evento: SyntheticEvent<HTMLImageElement>) {
-    const { naturalWidth, naturalHeight } = evento.currentTarget;
-    if (naturalWidth > 0 && naturalHeight > 0) {
-      setProporcao(naturalWidth / naturalHeight);
-    }
-  }
-
-  const srcTecido =
-    resultadoTecido?.modeloSvg === modelo.svg_url &&
-    resultadoTecido.fotoTecido === tecido.foto
-      ? resultadoTecido.src
-      : null;
-  const erroTecido =
-    resultadoTecido?.modeloSvg === modelo.svg_url &&
-    resultadoTecido.fotoTecido === tecido.foto
-      ? resultadoTecido.erro
-      : null;
-
-  return (
-    <figure className="resumo-peca">
-      <div
-        className="resumo-peca__imagem"
-        ref={caixaRef}
-      >
-        <div className="resumo-peca__area" data-parte={parte} style={estiloArea}>
-          <img
-            src={srcTecido ?? srcModelo(modelo.svg_url)}
-            alt={`${rotulo}: ${modelo.nome}`}
-            onLoad={atualizarProporcao}
-          />
-          {aplicados.map((aplicado, indice) => {
-            const adereco = aderecos.find((item) => item.id === aplicado.id_adereco);
-            const posicao: CSSProperties & { '--cor-adereco': string } = {
-              left: `${aplicado.coordenada_x * 100}%`,
-              top: `${aplicado.coordenada_y * 100}%`,
-              '--cor-adereco': corDoAdereco(aplicado.id_adereco, aderecos),
-            };
-            return (
-              <span
-                className="resumo-peca__ponto"
-                style={posicao}
-                key={`${aplicado.id_adereco}-${indice}`}
-                title={adereco?.nome}
-                aria-hidden="true"
-              />
-            );
-          })}
-        </div>
-      </div>
-      {tecido.foto && erroTecido && (
-        <p className="resumo-peca__erro-tecido" role="status">
-          Prévia sem estampa: {erroTecido}
-        </p>
-      )}
-    </figure>
-  );
 }
 
 function agruparAderecos(
@@ -230,6 +82,26 @@ export function CardConjuntoResumo({
     [...conjunto.cima.aderecos, ...conjunto.baixo.aderecos],
     aderecos,
   );
+  const totalAderecos = gruposAderecos.reduce((total, grupo) => total + grupo.quantidade, 0);
+  const pontosPreview: PontoAdereco[] = (
+    [
+      { parte: 'CIMA', aplicados: conjunto.cima.aderecos },
+      { parte: 'BAIXO', aplicados: conjunto.baixo.aderecos },
+    ] satisfies { parte: ParteDaPeca; aplicados: AderecoAplicado[] }[]
+  ).flatMap(({ parte, aplicados }) =>
+    aplicados.flatMap((aplicado, indice) => {
+      const adereco = aderecos.find((item) => item.id === aplicado.id_adereco);
+      if (!adereco) return [];
+      return [{
+        id: `${parte}:${indice}`,
+        adereco,
+        cor: corDoAdereco(adereco.id, aderecos),
+        peca: parte,
+        x: aplicado.coordenada_x,
+        y: aplicado.coordenada_y,
+      }];
+    }),
+  );
 
   useEffect(() => {
     const dialog = dialogFotoRef.current;
@@ -249,21 +121,12 @@ export function CardConjuntoResumo({
       </header>
 
       <div className="resumo-conjunto__previews">
-        <PreviewPeca
-          modelo={modeloCima}
-          aplicados={conjunto.cima.aderecos}
-          aderecos={aderecos}
+        <PedidoPreview
+          modeloCima={modeloCima}
+          modeloBaixo={modeloBaixo}
           tecido={tecido}
-          parte="CIMA"
-          rotulo="TOP"
-        />
-        <PreviewPeca
-          modelo={modeloBaixo}
-          aplicados={conjunto.baixo.aderecos}
-          aderecos={aderecos}
-          tecido={tecido}
-          parte="BAIXO"
-          rotulo="CALCINHA"
+          pontos={pontosPreview}
+          compacto
         />
       </div>
 
@@ -271,84 +134,84 @@ export function CardConjuntoResumo({
         className="resumo-conjunto__especificacoes"
         aria-label={`Especificações do conjunto ${numero}`}
       >
-        <h3>Especificações do conjunto</h3>
         <dl className="resumo-conjunto__detalhes">
-          <div className="resumo-conjunto__peca-info">
-            <dt>
-              <strong>Top · tamanho {conjunto.cima.tamanho}</strong>
-            </dt>
-            <dd>{modeloCima.nome}</dd>
-          </div>
-          <div className="resumo-conjunto__peca-info">
-            <dt>
-              <strong>Calcinha · tamanho {conjunto.baixo.tamanho}</strong>
-            </dt>
-            <dd>{modeloBaixo.nome}</dd>
+          <div className="resumo-conjunto__pecas">
+            <div className="resumo-conjunto__peca-info">
+              <dt>TOP</dt>
+              <dd>
+                <span className="resumo-conjunto__peca-nome">{modeloCima.nome}</span>
+                <span className="resumo-conjunto__peca-tamanho">
+                  Tamanho: {conjunto.cima.tamanho}
+                </span>
+              </dd>
+            </div>
+            <div className="resumo-conjunto__peca-info">
+              <dt>CALCINHA</dt>
+              <dd>
+                <span className="resumo-conjunto__peca-nome">{modeloBaixo.nome}</span>
+                <span className="resumo-conjunto__peca-tamanho">
+                  Tamanho: {conjunto.baixo.tamanho}
+                </span>
+              </dd>
+            </div>
           </div>
           <div className="resumo-conjunto__malha">
-            <dt>
-              <strong>Malha:</strong>
-            </dt>
+            <dt>Malha</dt>
             <dd>{tecido.nome}</dd>
           </div>
-          <div className="resumo-conjunto__referencia">
-            <dt>Foto de referência das medidas</dt>
-            <dd>
-              {conjunto.local.fotoPrevia ? (
-                <button
-                  className="resumo-conjunto__abrir-foto"
-                  type="button"
-                  onClick={() => setFotoAmpliada(true)}
-                  aria-haspopup="dialog"
-                  aria-label="Ampliar foto de referência das medidas"
-                >
-                  <img
-                    className="resumo-conjunto__foto"
-                    src={conjunto.local.fotoPrevia}
-                    alt=""
-                  />
-                  <span>Toque para ampliar</span>
-                </button>
-              ) : (
-                <span className="resumo-conjunto__sem-foto">Nenhuma foto enviada</span>
-              )}
-            </dd>
-          </div>
-          <div className="resumo-conjunto__detalhe">
-            <dt>
-              <strong>Observações</strong>
-            </dt>
-            <dd>{conjunto.observacao.trim() || 'Nenhuma observação.'}</dd>
-          </div>
-          <div className="resumo-conjunto__detalhe">
-            <dt>
-              <strong>Adereços aplicados</strong>
-            </dt>
-            <dd>
-              {gruposAderecos.length > 0 ? (
-                <ul className="resumo-conjunto__aderecos">
-                  {gruposAderecos.map((grupo, indice) => (
-                    <li key={`${grupo.nome}-${indice}`}>
-                      <span className="resumo-conjunto__adereco-nome">
-                        <span
-                          className="resumo-conjunto__adereco-cor"
-                          style={{ '--cor-adereco': grupo.cor } as CSSProperties}
-                          aria-hidden="true"
-                        />
-                        {grupo.nome}
-                      </span>
-                      <span>
-                        {grupo.quantidade} {grupo.quantidade === 1 ? 'unidade' : 'unidades'}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <span className="resumo-conjunto__sem-foto">Nenhum adereço aplicado.</span>
-              )}
-            </dd>
-          </div>
         </dl>
+
+        <div className="resumo-conjunto__referencia">
+          {conjunto.local.fotoPrevia ? (
+            <button
+              className="resumo-conjunto__abrir-foto"
+              type="button"
+              onClick={() => setFotoAmpliada(true)}
+              aria-haspopup="dialog"
+              aria-label="Ampliar foto de referência das medidas"
+            >
+              <img className="resumo-conjunto__foto" src={conjunto.local.fotoPrevia} alt="" />
+              <span>Foto de Referência de medidas</span>
+            </button>
+          ) : (
+            <span className="resumo-conjunto__sem-foto">Nenhuma foto enviada</span>
+          )}
+        </div>
+
+        <div className="resumo-conjunto__observacoes">
+          <span>Observações</span>
+          <p>{conjunto.observacao.trim() || 'Nenhuma observação.'}</p>
+        </div>
+
+        <div className="resumo-conjunto__aderecos">
+          <p className="resumo-conjunto__aderecos-cabecalho">
+            <span>
+              Adereços: {totalAderecos} {totalAderecos === 1 ? 'aplicado' : 'aplicados'}
+            </span>
+            {gruposAderecos.length === 0 && (
+              <span className="resumo-conjunto__aderecos-vazio">Nenhum</span>
+            )}
+          </p>
+          {gruposAderecos.length > 0 && (
+            <ul>
+              {gruposAderecos.map((grupo, indice) => (
+                <li key={`${grupo.nome}-${indice}`}>
+                  <span className="resumo-conjunto__adereco-nome">
+                    <span
+                      className="resumo-conjunto__adereco-cor"
+                      style={{ '--cor-adereco': grupo.cor } as CSSProperties}
+                      aria-hidden="true"
+                    />
+                    {grupo.nome}
+                    <span className="resumo-conjunto__adereco-quantidade">
+                      ({grupo.quantidade}x)
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </section>
       {conjunto.local.fotoPrevia && (
         <dialog
@@ -568,7 +431,8 @@ export function Resumo() {
           if (adicionarConjunto()) void navigate('/pedido/novo/modelo');
         }}
       >
-        + Fazer outro conjunto
+        <span>+ Fazer outro conjunto para o pedido</span>
+        <span className="resumo-pedido__novo-dica">Volta à etapa 1</span>
       </button>
       {conjuntos.length >= 6 && (
         <p className="resumo-pedido__limite" role="status">

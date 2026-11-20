@@ -296,7 +296,7 @@ Quando o conteúdo voltar, o ponto natural de entrada é cada arquivo em
 - **Tipografia:** Inter para texto, Hubballi para títulos e assinaturas e, no catálogo da home, Meow Script (oferta), Host Grotesk (detalhes) e Hubot Sans (preço).
 - **Estados ativos:** sempre via `NavLink`, sem estado manual duplicado.
 - **Nomenclatura de classes:** padrão BEM simplificado (`bloco__elemento--modificador`).
-- **Classes mortas:** `npm run css:check` falha se o `global.css` tiver seletor sem uso em `src/`. Classes montadas por template string vão em `CLASSES_DINAMICAS` e classes usadas só por arquivos de outra branch vão em `CLASSES_EXTERNAS` (ambas em `scripts/verificar-css.mjs`).
+- **Classes mortas:** `npm run css:check` falha se o `global.css` tiver seletor sem uso em `src/`. Classes montadas por template string vão em `CLASSES_DINAMICAS` (`scripts/verificar-css.mjs`).
 
 ## Como adicionar uma nova tela
 
