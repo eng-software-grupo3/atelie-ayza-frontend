@@ -1655,15 +1655,15 @@ a.botao--secundario:hover {
 }
 
 .resumo-pedido > h1 {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
 }
 
 .resumo-conjunto {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 10px;
+  gap: 14px;
+  padding: 14px;
   border: 1px solid var(--cor-destaque);
   border-radius: 10px;
   background: #fdf7f3;
@@ -1678,38 +1678,54 @@ a.botao--secundario:hover {
 
 .resumo-conjunto__cabecalho h2 {
   flex: 1;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .resumo-conjunto__cabecalho strong {
-  font-size: 13px;
+  font-size: 14px;
   white-space: nowrap;
 }
 
 .resumo-conjunto__previews {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  padding: 8px;
-  border: 1px solid #d59a87;
-  border-radius: 10px;
-  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0;
 }
 
 .resumo-peca {
+  display: flex;
   min-width: 0;
-  text-align: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  text-align: left;
 }
 
 .resumo-peca__imagem {
   position: relative;
   display: grid;
-  width: 100%;
+  width: min(100%, 620px);
+  height: clamp(160px, 22vw, 240px);
   place-items: center;
+  overflow: hidden;
+  border: 1px solid #d59a87;
+  border-radius: 9px;
+  background: #fff;
+  container-type: size;
 }
 
-.resumo-peca__imagem img {
+.resumo-peca__area {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(100cqw, 100cqh * var(--proporcao, 1));
+  height: min(100cqh, 100cqw / var(--proporcao, 1));
+  transform: translate(-50%, -50%);
+}
+
+.resumo-peca__area img {
   display: block;
   width: 100%;
   height: 100%;
@@ -1718,92 +1734,115 @@ a.botao--secundario:hover {
 
 .resumo-peca__ponto {
   position: absolute;
-  width: 7px;
-  height: 7px;
+  z-index: 1;
+  width: 13px;
+  height: 13px;
   transform: translate(-50%, -50%);
-  border: 1px solid #fff;
+  border: 2px solid #fff;
   border-radius: 50%;
   background: var(--cor-adereco, var(--cor-destaque-escuro));
-  box-shadow: 0 0 0 1px var(--cor-adereco, var(--cor-destaque-escuro));
+  box-shadow:
+    0 0 0 1px #3b2b26,
+    0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
 .resumo-peca figcaption {
   color: var(--cor-texto-suave);
-  font-size: 9px;
-  text-align: left;
+  width: min(100%, 620px);
+  font-size: 11px;
 }
 
 .resumo-peca > p {
   overflow: hidden;
-  font-size: 9px;
-  text-align: left;
+  width: min(100%, 620px);
+  font-size: 11px;
   text-overflow: ellipsis;
 }
 
 .resumo-peca > .resumo-peca__erro-tecido {
   color: var(--cor-erro);
-  font-size: 8px;
+  width: min(100%, 620px);
+  font-size: 9px;
 }
 
 .resumo-conjunto__detalhes {
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  font-size: 10px;
+  gap: 12px;
+  font-size: 12px;
 }
 
 .resumo-conjunto__detalhes > div {
-  display: grid;
-  grid-template-columns: minmax(110px, 0.8fr) minmax(0, 1.2fr);
-  gap: 8px;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
 }
 
 .resumo-conjunto__detalhes dt {
   color: var(--cor-texto-suave);
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .resumo-conjunto__detalhes dd {
   min-width: 0;
   overflow-wrap: anywhere;
+  font-size: 12px;
+}
+
+.resumo-conjunto__detalhes > .resumo-conjunto__malha {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.resumo-conjunto__malha dt {
+  color: inherit;
 }
 
 .resumo-conjunto__detalhes > .resumo-conjunto__referencia {
-  grid-template-columns: 76px minmax(0, 1fr);
-  align-items: center;
-  padding: 8px;
+  gap: 8px;
+  padding: 10px;
   border: 1px solid #d59a87;
   border-radius: 8px;
   background: #fff;
 }
 
-.resumo-conjunto__referencia dt {
-  grid-column: 2;
-  grid-row: 1;
-  text-align: center;
+.resumo-conjunto__abrir-foto {
+  display: inline-flex;
+  max-width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 7px;
+  border: 1px solid var(--cor-borda-suave);
+  border-radius: 8px;
+  background: #fffaf7;
+  color: var(--cor-texto-suave);
+  font: inherit;
+  cursor: zoom-in;
 }
 
-.resumo-conjunto__referencia dd {
-  grid-column: 1;
-  grid-row: 1;
+.resumo-conjunto__abrir-foto:hover {
+  border-color: var(--cor-destaque);
+  color: var(--cor-texto);
 }
 
 .resumo-conjunto__foto {
   display: block;
-  width: 72px;
-  height: 72px;
-  border: 1px solid var(--cor-borda-suave);
-  border-radius: 7px;
-  background: #fffaf7;
+  width: 112px;
+  height: 112px;
+  border-radius: 4px;
   object-fit: contain;
 }
 
 .resumo-conjunto__sem-foto {
   display: grid;
-  min-height: 72px;
+  min-height: 40px;
   place-items: center;
   color: var(--cor-texto-suave);
-  font-size: 9px;
-  text-align: center;
+  font-size: 12px;
 }
 
 .resumo-conjunto__aderecos {
@@ -1817,6 +1856,7 @@ a.botao--secundario:hover {
   align-items: center;
   justify-content: space-between;
   gap: 6px;
+  font-size: 12px;
 }
 
 .resumo-conjunto__aderecos li > span:last-child {
@@ -1832,12 +1872,54 @@ a.botao--secundario:hover {
 }
 
 .resumo-conjunto__adereco-cor {
-  width: 8px;
-  height: 8px;
-  flex: 0 0 8px;
+  width: 9px;
+  height: 9px;
+  flex: 0 0 9px;
   border-radius: 50%;
   background: var(--cor-adereco);
   box-shadow: 0 0 0 1px rgba(67, 47, 41, 0.18);
+}
+
+.resumo-foto-dialog {
+  position: fixed;
+  width: fit-content;
+  max-width: min(92vw, 1000px);
+  max-height: 92vh;
+  padding: 42px 12px 12px;
+  overflow: visible;
+  border: 1px solid var(--cor-destaque);
+  border-radius: 12px;
+  background: #fdf7f3;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.resumo-foto-dialog::backdrop {
+  background: rgba(31, 22, 19, 0.72);
+}
+
+.resumo-foto-dialog > img {
+  display: block;
+  max-width: calc(92vw - 24px);
+  max-height: calc(92vh - 54px);
+  border-radius: 6px;
+  object-fit: contain;
+}
+
+.resumo-foto-dialog__fechar {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid var(--cor-borda-suave);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--cor-texto);
+  font-size: 21px;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .resumo-pedido__novo {
@@ -1846,7 +1928,7 @@ a.botao--secundario:hover {
   border-radius: 8px;
   background: transparent;
   color: var(--cor-texto);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
 }
@@ -1864,22 +1946,31 @@ a.botao--secundario:hover {
 .resumo-pedido__limite,
 .resumo-status {
   color: var(--cor-texto-suave);
-  font-size: 11px;
+  font-size: 12px;
   text-align: center;
 }
 
-.resumo-pedido__subtotal {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 12px;
-  border-top: 1px solid var(--cor-borda-suave);
-  font-size: 12px;
+.resumo-pedido__totais .personalizacao__totais {
+  margin: 0;
+  font-size: 13px;
 }
 
-.resumo-pedido__subtotal strong {
-  font-size: 14px;
+.resumo-pedido__totais .personalizacao__linha--total {
+  font-size: 17px;
+}
+
+@media (min-width: 768px) {
+  .resumo-conjunto {
+    padding: 18px;
+  }
+
+  .resumo-conjunto__previews {
+    gap: 18px;
+  }
+
+  .resumo-conjunto__detalhes {
+    gap: 14px;
+  }
 }
 
 .resumo-erro {
@@ -2304,9 +2395,17 @@ a.botao--secundario:hover {
 }
 
 .personalizacao__opcao[aria-pressed='true'] {
-  border-color: var(--cor-destaque);
-  background: var(--cor-destaque);
+  border-color: var(--cor-destaque-escuro);
+  background: var(--cor-destaque-escuro);
   color: var(--cor-branco);
+  font-size: 12px;
+  font-weight: 700;
+  -webkit-font-smoothing: auto;
+}
+
+.personalizacao__opcao[aria-pressed='true'] strong {
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .personalizacao__opcao > span:first-child,
@@ -2542,9 +2641,12 @@ a.botao--secundario:hover {
 }
 
 .personalizacao__tamanho[aria-pressed='true'] {
-  background: var(--cor-destaque);
+  border: 2px solid var(--cor-destaque-escuro);
+  background: var(--cor-destaque-escuro);
   color: var(--cor-branco);
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 800;
+  -webkit-font-smoothing: auto;
 }
 
 .personalizacao__upload {
@@ -2655,8 +2757,23 @@ a.botao--secundario:hover {
 
 /* Adereço escolhido para o próximo toque na peça. */
 .adereco-card[aria-pressed='true'] {
-  outline: 2px solid var(--cor-destaque);
+  border: 2px solid var(--cor-destaque-escuro);
+  outline: 2px solid var(--cor-destaque-escuro);
   outline-offset: 2px;
+  background: #fff;
+}
+
+.adereco-card[aria-pressed='true'] .adereco-card__info {
+  color: #171312;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  -webkit-font-smoothing: auto;
+}
+
+.adereco-card[aria-pressed='true'] .adereco-card__nome,
+.adereco-card[aria-pressed='true'] .adereco-card__preco strong {
+  font-weight: 800;
 }
 
 .adereco-card__foto {

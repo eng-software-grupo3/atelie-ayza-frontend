@@ -1,10 +1,18 @@
-import { useEffect, useState, type CSSProperties, type SyntheticEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type SyntheticEvent,
+} from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import { TotaisPedido } from '../../components/TotaisPedido.tsx';
 import type {
   AderecoAplicado,
   CatalogosPedido,
   ContextoPedido,
   ConjuntoRascunho,
+  ParteDaPeca,
 } from '../../data/pedido.ts';
 import {
   coresDosAderecos,
@@ -57,6 +65,7 @@ function PreviewPeca({
   aplicados,
   aderecos,
   tecido,
+  parte,
   rotulo,
   tamanho,
 }: {
@@ -64,6 +73,7 @@ function PreviewPeca({
   aplicados: AderecoAplicado[];
   aderecos: AderecoCatalogo[];
   tecido: TecidoCatalogo;
+  parte: ParteDaPeca;
   rotulo: string;
   tamanho: string;
 }) {
@@ -145,29 +155,34 @@ function PreviewPeca({
 
   return (
     <figure className="resumo-peca">
-      <div className="resumo-peca__imagem" style={{ aspectRatio: String(proporcao) }}>
-        <img
-          src={srcTecido ?? srcModelo(modelo.svg_url)}
-          alt={`${rotulo}: ${modelo.nome}`}
-          onLoad={atualizarProporcao}
-        />
-        {aplicados.map((aplicado, indice) => {
-          const adereco = aderecos.find((item) => item.id === aplicado.id_adereco);
-          const posicao: CSSProperties & { '--cor-adereco': string } = {
-            left: `${aplicado.coordenada_x * 100}%`,
-            top: `${aplicado.coordenada_y * 100}%`,
-            '--cor-adereco': corDoAdereco(aplicado.id_adereco, aderecos),
-          };
-          return (
-            <span
-              className="resumo-peca__ponto"
-              style={posicao}
-              key={`${aplicado.id_adereco}-${indice}`}
-              title={adereco?.nome}
-              aria-hidden="true"
-            />
-          );
-        })}
+      <div
+        className="resumo-peca__imagem"
+        style={{ '--proporcao': proporcao } as CSSProperties}
+      >
+        <div className="resumo-peca__area" data-parte={parte}>
+          <img
+            src={srcTecido ?? srcModelo(modelo.svg_url)}
+            alt={`${rotulo}: ${modelo.nome}`}
+            onLoad={atualizarProporcao}
+          />
+          {aplicados.map((aplicado, indice) => {
+            const adereco = aderecos.find((item) => item.id === aplicado.id_adereco);
+            const posicao: CSSProperties & { '--cor-adereco': string } = {
+              left: `${aplicado.coordenada_x * 100}%`,
+              top: `${aplicado.coordenada_y * 100}%`,
+              '--cor-adereco': corDoAdereco(aplicado.id_adereco, aderecos),
+            };
+            return (
+              <span
+                className="resumo-peca__ponto"
+                style={posicao}
+                key={`${aplicado.id_adereco}-${indice}`}
+                title={adereco?.nome}
+                aria-hidden="true"
+              />
+            );
+          })}
+        </div>
       </div>
       {tecido.foto && erroTecido && (
         <p className="resumo-peca__erro-tecido" role="status">
@@ -211,10 +226,19 @@ export function CardConjuntoResumo({
   precoCentavos,
   onAlterar,
 }: PropsCardConjunto) {
+  const [fotoAmpliada, setFotoAmpliada] = useState(false);
+  const dialogFotoRef = useRef<HTMLDialogElement>(null);
   const gruposAderecos = agruparAderecos(
     [...conjunto.cima.aderecos, ...conjunto.baixo.aderecos],
     aderecos,
   );
+
+  useEffect(() => {
+    const dialog = dialogFotoRef.current;
+    if (!dialog) return;
+    if (fotoAmpliada && !dialog.open) dialog.showModal();
+    else if (!fotoAmpliada && dialog.open) dialog.close();
+  }, [fotoAmpliada]);
 
   return (
     <article className="resumo-conjunto">
@@ -232,6 +256,7 @@ export function CardConjuntoResumo({
           aplicados={conjunto.cima.aderecos}
           aderecos={aderecos}
           tecido={tecido}
+          parte="CIMA"
           rotulo="TOP"
           tamanho={conjunto.cima.tamanho}
         />
@@ -240,36 +265,52 @@ export function CardConjuntoResumo({
           aplicados={conjunto.baixo.aderecos}
           aderecos={aderecos}
           tecido={tecido}
+          parte="BAIXO"
           rotulo="CALCINHA"
           tamanho={conjunto.baixo.tamanho}
         />
       </div>
 
       <dl className="resumo-conjunto__detalhes">
-        <div>
-          <dt>Malha</dt>
+        <div className="resumo-conjunto__malha">
+          <dt>
+            <strong>Malha:</strong>
+          </dt>
           <dd>{tecido.nome}</dd>
         </div>
         <div className="resumo-conjunto__referencia">
           <dt>Foto de referência das medidas</dt>
           <dd>
             {conjunto.local.fotoPrevia ? (
-              <img
-                className="resumo-conjunto__foto"
-                src={conjunto.local.fotoPrevia}
-                alt="Foto de referência das medidas"
-              />
+              <button
+                className="resumo-conjunto__abrir-foto"
+                type="button"
+                onClick={() => setFotoAmpliada(true)}
+                aria-haspopup="dialog"
+                aria-label="Ampliar foto de referência das medidas"
+              >
+                <img
+                  className="resumo-conjunto__foto"
+                  src={conjunto.local.fotoPrevia}
+                  alt=""
+                />
+                <span>Toque para ampliar</span>
+              </button>
             ) : (
               <span className="resumo-conjunto__sem-foto">Nenhuma foto enviada</span>
             )}
           </dd>
         </div>
-        <div>
-          <dt>Observações</dt>
+        <div className="resumo-conjunto__detalhe">
+          <dt>
+            <strong>Observações</strong>
+          </dt>
           <dd>{conjunto.observacao.trim() || 'Nenhuma observação.'}</dd>
         </div>
-        <div>
-          <dt>Adereços aplicados</dt>
+        <div className="resumo-conjunto__detalhe">
+          <dt>
+            <strong>Adereços aplicados</strong>
+          </dt>
           <dd>
             {gruposAderecos.length > 0 ? (
               <ul className="resumo-conjunto__aderecos">
@@ -295,6 +336,27 @@ export function CardConjuntoResumo({
           </dd>
         </div>
       </dl>
+      {conjunto.local.fotoPrevia && (
+        <dialog
+          className="resumo-foto-dialog"
+          ref={dialogFotoRef}
+          aria-label="Foto de referência das medidas"
+          onClose={() => setFotoAmpliada(false)}
+          onClick={(evento) => {
+            if (evento.target === evento.currentTarget) setFotoAmpliada(false);
+          }}
+        >
+          <button
+            className="resumo-foto-dialog__fechar"
+            type="button"
+            onClick={() => setFotoAmpliada(false)}
+            aria-label="Fechar foto ampliada"
+          >
+            ×
+          </button>
+          <img src={conjunto.local.fotoPrevia} alt="Foto de referência das medidas ampliada" />
+        </dialog>
+      )}
     </article>
   );
 }
@@ -500,10 +562,12 @@ export function Resumo() {
         </p>
       )}
 
-      <section className="resumo-pedido__subtotal" aria-label="Subtotal do pedido">
-        <span>Subtotal das peças</span>
-        <strong>{formatarCentavos(subtotal)}</strong>
-      </section>
+      <div className="resumo-pedido__totais">
+        <TotaisPedido
+          linhas={[{ rotulo: 'Subtotal das peças:', valor: subtotal / 100 }]}
+          total={subtotal / 100}
+        />
+      </div>
     </div>
   );
 }
