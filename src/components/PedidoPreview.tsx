@@ -9,6 +9,7 @@ import {
 } from 'react';
 import type { ParteDaPeca, PontoAdereco } from '../data/pedido.ts';
 import type { ModeloCatalogo } from '../services/catalogo.ts';
+import { useContainedImageArea } from '../hooks/useContainedImageArea.ts';
 import {
   aplicarTecidoNoModelo,
   urlDaImagemCatalogo,
@@ -52,6 +53,7 @@ function PecaPreview({
 }: PecaPreviewProps) {
   const [proporcao, setProporcao] = useState<number | null>(null);
   const pontosDaPeca = pontos.filter((ponto) => ponto.peca === peca);
+  const { ref: caixaRef, estilo: estiloArea } = useContainedImageArea(proporcao);
 
   function aoCarregar(evento: SyntheticEvent<HTMLImageElement>) {
     const { naturalWidth, naturalHeight } = evento.currentTarget;
@@ -75,10 +77,8 @@ function PecaPreview({
     );
   }
 
-  const estiloArea = proporcao ? ({ '--proporcao': proporcao } as CSSProperties) : undefined;
-
   return (
-    <div className="pedido-preview__peca-caixa">
+    <div className="pedido-preview__peca-caixa" ref={caixaRef}>
       <img className="pedido-preview__peca" src={src} alt={alt} onLoad={aoCarregar} />
       {onMarcar || pontosDaPeca.length > 0 ? (
         <div

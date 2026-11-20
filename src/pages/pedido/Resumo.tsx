@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { TotaisPedido } from '../../components/TotaisPedido.tsx';
+import { useContainedImageArea } from '../../hooks/useContainedImageArea.ts';
 import type {
   AderecoAplicado,
   CatalogosPedido,
@@ -77,7 +78,8 @@ function PreviewPeca({
   rotulo: string;
   tamanho: string;
 }) {
-  const [proporcao, setProporcao] = useState(1.4);
+  const [proporcao, setProporcao] = useState<number | null>(null);
+  const { ref: caixaRef, estilo: estiloArea } = useContainedImageArea(proporcao);
   const [resultadoTecido, setResultadoTecido] = useState<{
     modeloSvg: string;
     fotoTecido: string;
@@ -157,9 +159,9 @@ function PreviewPeca({
     <figure className="resumo-peca">
       <div
         className="resumo-peca__imagem"
-        style={{ '--proporcao': proporcao } as CSSProperties}
+        ref={caixaRef}
       >
-        <div className="resumo-peca__area" data-parte={parte}>
+        <div className="resumo-peca__area" data-parte={parte} style={estiloArea}>
           <img
             src={srcTecido ?? srcModelo(modelo.svg_url)}
             alt={`${rotulo}: ${modelo.nome}`}
