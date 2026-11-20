@@ -1690,13 +1690,18 @@ a.botao--secundario:hover {
 .resumo-conjunto__previews {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 0;
+  gap: 0;
+  padding: 8px 14px;
+  border: 1px solid #d59a87;
+  border-radius: 10px;
+  background: #fff;
 }
 
 .resumo-peca {
   display: flex;
+  width: 100%;
   min-width: 0;
+  margin: 0;
   flex-direction: column;
   align-items: center;
   gap: 5px;
@@ -1709,10 +1714,6 @@ a.botao--secundario:hover {
   width: min(100%, 620px);
   height: clamp(160px, 22vw, 240px);
   place-items: center;
-  overflow: hidden;
-  border: 1px solid #d59a87;
-  border-radius: 9px;
-  background: #fff;
 }
 
 .resumo-peca__area {
@@ -1745,29 +1746,40 @@ a.botao--secundario:hover {
     0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
-.resumo-peca figcaption {
-  color: var(--cor-texto-suave);
-  width: min(100%, 620px);
-  font-size: 11px;
-}
-
-.resumo-peca > p {
-  overflow: hidden;
-  width: min(100%, 620px);
-  font-size: 11px;
-  text-overflow: ellipsis;
-}
-
 .resumo-peca > .resumo-peca__erro-tecido {
   color: var(--cor-erro);
   width: min(100%, 620px);
   font-size: 9px;
 }
 
-.resumo-conjunto__detalhes {
+.resumo-peca + .resumo-peca {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--cor-borda-suave);
+}
+
+.resumo-conjunto__especificacoes {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--cor-borda-suave);
+  border-radius: 10px;
+  background: #fffaf7;
+}
+
+.resumo-conjunto__especificacoes h3 {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--cor-borda-suave);
+  color: var(--cor-texto-forte);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.resumo-conjunto__detalhes {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   font-size: 12px;
 }
 
@@ -1788,6 +1800,15 @@ a.botao--secundario:hover {
   min-width: 0;
   overflow-wrap: anywhere;
   font-size: 12px;
+}
+
+.resumo-conjunto__detalhes > .resumo-conjunto__peca-info {
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--cor-borda-suave);
+}
+
+.resumo-conjunto__peca-info dt {
+  color: var(--cor-texto-forte);
 }
 
 .resumo-conjunto__detalhes > .resumo-conjunto__malha {
@@ -1964,7 +1985,8 @@ a.botao--secundario:hover {
   }
 
   .resumo-conjunto__previews {
-    gap: 18px;
+    padding-right: 20px;
+    padding-left: 20px;
   }
 
   .resumo-conjunto__detalhes {

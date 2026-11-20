@@ -68,7 +68,6 @@ function PreviewPeca({
   tecido,
   parte,
   rotulo,
-  tamanho,
 }: {
   modelo: ModeloCatalogo;
   aplicados: AderecoAplicado[];
@@ -76,7 +75,6 @@ function PreviewPeca({
   tecido: TecidoCatalogo;
   parte: ParteDaPeca;
   rotulo: string;
-  tamanho: string;
 }) {
   const [proporcao, setProporcao] = useState<number | null>(null);
   const { ref: caixaRef, estilo: estiloArea } = useContainedImageArea(proporcao);
@@ -191,8 +189,6 @@ function PreviewPeca({
           Prévia sem estampa: {erroTecido}
         </p>
       )}
-      <figcaption>{rotulo} · tamanho {tamanho}</figcaption>
-      <p>{modelo.nome}</p>
     </figure>
   );
 }
@@ -260,7 +256,6 @@ export function CardConjuntoResumo({
           tecido={tecido}
           parte="CIMA"
           rotulo="TOP"
-          tamanho={conjunto.cima.tamanho}
         />
         <PreviewPeca
           modelo={modeloBaixo}
@@ -269,75 +264,92 @@ export function CardConjuntoResumo({
           tecido={tecido}
           parte="BAIXO"
           rotulo="CALCINHA"
-          tamanho={conjunto.baixo.tamanho}
         />
       </div>
 
-      <dl className="resumo-conjunto__detalhes">
-        <div className="resumo-conjunto__malha">
-          <dt>
-            <strong>Malha:</strong>
-          </dt>
-          <dd>{tecido.nome}</dd>
-        </div>
-        <div className="resumo-conjunto__referencia">
-          <dt>Foto de referência das medidas</dt>
-          <dd>
-            {conjunto.local.fotoPrevia ? (
-              <button
-                className="resumo-conjunto__abrir-foto"
-                type="button"
-                onClick={() => setFotoAmpliada(true)}
-                aria-haspopup="dialog"
-                aria-label="Ampliar foto de referência das medidas"
-              >
-                <img
-                  className="resumo-conjunto__foto"
-                  src={conjunto.local.fotoPrevia}
-                  alt=""
-                />
-                <span>Toque para ampliar</span>
-              </button>
-            ) : (
-              <span className="resumo-conjunto__sem-foto">Nenhuma foto enviada</span>
-            )}
-          </dd>
-        </div>
-        <div className="resumo-conjunto__detalhe">
-          <dt>
-            <strong>Observações</strong>
-          </dt>
-          <dd>{conjunto.observacao.trim() || 'Nenhuma observação.'}</dd>
-        </div>
-        <div className="resumo-conjunto__detalhe">
-          <dt>
-            <strong>Adereços aplicados</strong>
-          </dt>
-          <dd>
-            {gruposAderecos.length > 0 ? (
-              <ul className="resumo-conjunto__aderecos">
-                {gruposAderecos.map((grupo, indice) => (
-                  <li key={`${grupo.nome}-${indice}`}>
-                    <span className="resumo-conjunto__adereco-nome">
-                      <span
-                        className="resumo-conjunto__adereco-cor"
-                        style={{ '--cor-adereco': grupo.cor } as CSSProperties}
-                        aria-hidden="true"
-                      />
-                      {grupo.nome}
-                    </span>
-                    <span>
-                      {grupo.quantidade} {grupo.quantidade === 1 ? 'unidade' : 'unidades'}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <span className="resumo-conjunto__sem-foto">Nenhum adereço aplicado.</span>
-            )}
-          </dd>
-        </div>
-      </dl>
+      <section
+        className="resumo-conjunto__especificacoes"
+        aria-label={`Especificações do conjunto ${numero}`}
+      >
+        <h3>Especificações do conjunto</h3>
+        <dl className="resumo-conjunto__detalhes">
+          <div className="resumo-conjunto__peca-info">
+            <dt>
+              <strong>Top · tamanho {conjunto.cima.tamanho}</strong>
+            </dt>
+            <dd>{modeloCima.nome}</dd>
+          </div>
+          <div className="resumo-conjunto__peca-info">
+            <dt>
+              <strong>Calcinha · tamanho {conjunto.baixo.tamanho}</strong>
+            </dt>
+            <dd>{modeloBaixo.nome}</dd>
+          </div>
+          <div className="resumo-conjunto__malha">
+            <dt>
+              <strong>Malha:</strong>
+            </dt>
+            <dd>{tecido.nome}</dd>
+          </div>
+          <div className="resumo-conjunto__referencia">
+            <dt>Foto de referência das medidas</dt>
+            <dd>
+              {conjunto.local.fotoPrevia ? (
+                <button
+                  className="resumo-conjunto__abrir-foto"
+                  type="button"
+                  onClick={() => setFotoAmpliada(true)}
+                  aria-haspopup="dialog"
+                  aria-label="Ampliar foto de referência das medidas"
+                >
+                  <img
+                    className="resumo-conjunto__foto"
+                    src={conjunto.local.fotoPrevia}
+                    alt=""
+                  />
+                  <span>Toque para ampliar</span>
+                </button>
+              ) : (
+                <span className="resumo-conjunto__sem-foto">Nenhuma foto enviada</span>
+              )}
+            </dd>
+          </div>
+          <div className="resumo-conjunto__detalhe">
+            <dt>
+              <strong>Observações</strong>
+            </dt>
+            <dd>{conjunto.observacao.trim() || 'Nenhuma observação.'}</dd>
+          </div>
+          <div className="resumo-conjunto__detalhe">
+            <dt>
+              <strong>Adereços aplicados</strong>
+            </dt>
+            <dd>
+              {gruposAderecos.length > 0 ? (
+                <ul className="resumo-conjunto__aderecos">
+                  {gruposAderecos.map((grupo, indice) => (
+                    <li key={`${grupo.nome}-${indice}`}>
+                      <span className="resumo-conjunto__adereco-nome">
+                        <span
+                          className="resumo-conjunto__adereco-cor"
+                          style={{ '--cor-adereco': grupo.cor } as CSSProperties}
+                          aria-hidden="true"
+                        />
+                        {grupo.nome}
+                      </span>
+                      <span>
+                        {grupo.quantidade} {grupo.quantidade === 1 ? 'unidade' : 'unidades'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <span className="resumo-conjunto__sem-foto">Nenhum adereço aplicado.</span>
+              )}
+            </dd>
+          </div>
+        </dl>
+      </section>
       {conjunto.local.fotoPrevia && (
         <dialog
           className="resumo-foto-dialog"
