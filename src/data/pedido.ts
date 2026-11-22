@@ -35,6 +35,28 @@ export type ConjuntoRascunho = {
 
 export type ConjuntoPedidoBody = Omit<ConjuntoRascunho, 'local'>;
 export type PedidoRascunho = { conjuntos: ConjuntoPedidoBody[] };
+export type ConjuntoPedidoCompleto = Omit<ConjuntoPedidoBody, 'id_tecido' | 'cima' | 'baixo'> & {
+  id_tecido: string;
+  cima: Omit<PecaRascunho, 'id_modelo'> & { id_modelo: string };
+  baixo: Omit<PecaRascunho, 'id_modelo'> & { id_modelo: string };
+};
+
+export type ModalidadeFrete = 'padrao' | 'sedex';
+
+export type DadosEntregaPedido = {
+  cep: string;
+  rua: string;
+  ruaViaCep: boolean;
+  numero: string;
+  semNumero: boolean;
+  complemento: string;
+  bairro: string;
+  bairroViaCep: boolean;
+  telefone: string;
+  quantidadeConjuntosCotada: number | null;
+  modalidadeFrete: ModalidadeFrete | '';
+  dataEntregaPrevista: string;
+};
 
 export type CatalogosPedido = {
   modelos: ModeloCatalogo[] | null;
@@ -56,12 +78,30 @@ export type ContextoPedido = {
   rascunho: ConjuntoRascunho;
   setRascunho: Dispatch<SetStateAction<ConjuntoRascunho>>;
   conjuntos: ConjuntoRascunho[];
+  setConjuntos: Dispatch<SetStateAction<ConjuntoRascunho[]>>;
   indiceConjuntoAtivo: number;
   setIndiceConjuntoAtivo: Dispatch<SetStateAction<number>>;
   catalogos: CatalogosPedido;
   setCatalogos: Dispatch<SetStateAction<CatalogosPedido>>;
+  dadosEntrega: DadosEntregaPedido;
+  setDadosEntrega: Dispatch<SetStateAction<DadosEntregaPedido>>;
   avisar: (mensagem: string) => void;
   adicionarConjunto: () => boolean;
+};
+
+export const dadosEntregaIniciais: DadosEntregaPedido = {
+  cep: '',
+  rua: '',
+  ruaViaCep: false,
+  numero: '',
+  semNumero: false,
+  complemento: '',
+  bairro: '',
+  bairroViaCep: false,
+  telefone: '',
+  quantidadeConjuntosCotada: null,
+  modalidadeFrete: '',
+  dataEntregaPrevista: '',
 };
 
 export const rascunhoInicial = (): ConjuntoRascunho => ({

@@ -2050,6 +2050,310 @@ a.botao--secundario:hover {
   font-size: 12px;
 }
 
+/* Entrega --------------------------------------------------------------- */
+
+.entrega {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  color: var(--cor-texto-forte);
+}
+
+.entrega__cabecalho {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.entrega__cabecalho h1 {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.entrega__cabecalho p,
+.entrega__ajuda {
+  color: var(--cor-texto-suave);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.entrega__formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.entrega__secao {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--cor-borda-suave);
+  border-radius: 12px;
+  background: #fffaf7;
+  box-shadow: 0 2px 4px rgba(67, 47, 41, 0.12);
+}
+
+.entrega__secao h2 {
+  color: var(--cor-titulo);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.entrega__grade {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 11px;
+}
+
+.entrega .campo {
+  min-width: 0;
+  gap: 5px;
+}
+
+.entrega .campo__rotulo {
+  color: var(--cor-texto-forte);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.entrega .campo input,
+.entrega .campo select {
+  min-height: 42px;
+  border-color: #bca39b;
+  border-radius: 7px;
+  background: #fff;
+  color: var(--cor-texto-forte);
+  font-size: 15px;
+}
+
+.entrega .campo input[readonly] {
+  background: #f1ece9;
+  color: var(--cor-texto-suave);
+}
+
+.entrega__sem-numero {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 8px;
+  color: var(--cor-texto-forte);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.entrega__sem-numero input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--cor-destaque-escuro);
+}
+
+.entrega__endereco-cotado {
+  color: var(--cor-texto-suave);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.entrega__ajuda--erro {
+  color: var(--cor-erro);
+}
+
+.entrega__fretes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 9px;
+}
+
+.entrega__frete {
+  display: flex;
+  min-width: 0;
+  min-height: 70px;
+  align-items: center;
+  gap: 10px;
+  padding: 11px;
+  border: 1.5px solid var(--cor-borda-suave);
+  border-radius: 9px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.entrega__frete--selecionado {
+  border-color: var(--cor-destaque-escuro);
+  background: var(--cor-rosa-claro);
+  box-shadow: inset 0 0 0 1px var(--cor-destaque-escuro);
+}
+
+.entrega__frete input {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  accent-color: var(--cor-destaque-escuro);
+}
+
+.entrega__frete-info {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.entrega__frete-info strong,
+.entrega__frete-preco {
+  color: var(--cor-texto-forte);
+  font-size: 14px;
+}
+
+.entrega__frete-info span {
+  color: var(--cor-texto-suave);
+  font-size: 12px;
+}
+
+.entrega__calendario {
+  width: min(100%, 430px);
+  padding: 12px;
+  border: 1px solid var(--cor-borda-suave);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.entrega__calendario-topo {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 40px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.entrega__calendario-topo h3 {
+  color: var(--cor-titulo);
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.entrega__mes {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid var(--cor-borda-suave);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--cor-texto);
+  font-size: 25px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.entrega__mes:hover:not(:disabled) {
+  border-color: var(--cor-destaque);
+  background: var(--cor-rosa-claro);
+}
+
+.entrega__mes:disabled {
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+.entrega__dias {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.entrega__dia-semana,
+.entrega__dia-vazio,
+.entrega__dia {
+  display: grid;
+  min-width: 0;
+  min-height: 40px;
+  place-items: center;
+}
+
+.entrega__dia-semana {
+  color: var(--cor-texto-suave);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.entrega__dia {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--cor-texto-forte);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.entrega__dia:hover:not(:disabled) {
+  border-color: var(--cor-destaque);
+  background: var(--cor-rosa-claro);
+}
+
+.entrega__dia:disabled {
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+.entrega__dia--selecionado,
+.entrega__dia--selecionado:hover {
+  border-color: var(--cor-destaque-escuro);
+  background: var(--cor-destaque-escuro);
+  color: #fff;
+  font-weight: 700;
+}
+
+.entrega__mensagem {
+  padding: 11px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.entrega__mensagem--erro {
+  border: 1px solid var(--cor-erro);
+  background: var(--cor-erro-claro);
+  color: #612614;
+}
+
+.entrega__acoes .step-footer__voltar {
+  min-height: 40px;
+}
+
+.entrega__acoes .botao {
+  min-height: 44px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.entrega__acoes .botao:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (min-width: 480px) {
+  .entrega__secao {
+    padding: 17px;
+  }
+
+  .entrega__grade {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 13px;
+  }
+
+  .entrega__fretes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .entrega__telefone {
+    grid-column: 1 / -1;
+  }
+
+}
+
 /* Agenda ---------------------------------------------------------------- */
 
 .agenda-pagina {
@@ -2960,4 +3264,258 @@ a.botao--secundario:hover {
 .pontos-lista__quantidade {
   color: var(--cor-texto-suave);
   font-weight: 700;
+}
+
+/* Entrega: compacto como o protótipo, mantendo os campos exigidos pela API. */
+.entrega {
+  width: min(100%, 900px);
+  margin-inline: auto;
+  gap: 12px;
+}
+
+.entrega__cabecalho {
+  gap: 4px;
+}
+
+.entrega__cabecalho h1 {
+  color: var(--cor-titulo);
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.entrega__cabecalho p,
+.entrega__ajuda {
+  font-size: 14px;
+}
+
+.entrega__formulario {
+  gap: 12px;
+  padding-bottom: 4px;
+}
+
+.entrega__secao {
+  gap: 12px;
+  padding: 16px;
+  border-color: var(--cor-borda-card);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 2px 7px rgba(67, 47, 41, 0.08);
+}
+
+.entrega__secao h2 {
+  font-size: 17px;
+}
+
+.entrega .campo {
+  gap: 5px;
+}
+
+.entrega .campo__rotulo {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.entrega .campo input {
+  min-height: 43px;
+  border-color: #d7c9c4;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.entrega .campo input[readonly] {
+  background: #f7f4f2;
+  color: #555;
+}
+
+.entrega__grade--contato,
+.entrega__grade--endereco {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.entrega__campo-rua {
+  grid-column: 1 / -1;
+}
+
+.entrega__cep-linha {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+}
+
+.entrega__calcular {
+  min-height: 43px;
+  padding: 0 16px;
+  white-space: nowrap;
+}
+
+.entrega__numero-linha {
+  display: grid;
+  grid-template-columns: minmax(100px, 0.7fr) minmax(110px, 1fr);
+  align-items: end;
+  gap: 10px;
+}
+
+.entrega__sem-numero {
+  min-height: 43px;
+  font-size: 13px;
+}
+
+.entrega__endereco-cotado {
+  font-size: 13px;
+}
+
+.entrega__fretes {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 195px), 1fr));
+  gap: 10px;
+}
+
+.entrega__frete {
+  min-height: 76px;
+  padding: 12px;
+  border-color: #dfd3cf;
+  border-radius: 10px;
+}
+
+.entrega__frete-info strong,
+.entrega__frete-preco {
+  font-size: 15px;
+}
+
+.entrega__frete-info span {
+  font-size: 13px;
+}
+
+.entrega__calendario {
+  width: min(100%, 420px);
+  margin-inline: auto;
+  padding: 14px;
+  border-color: #eadfdb;
+  border-radius: 12px;
+}
+
+.entrega__calendario-topo {
+  grid-template-columns: 38px minmax(0, 1fr) 38px;
+}
+
+.entrega__mes {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+}
+
+.entrega__dia-semana,
+.entrega__dia-vazio,
+.entrega__dia {
+  min-height: 42px;
+}
+
+.entrega__dia-semana {
+  font-size: 12px;
+}
+
+.entrega__dia {
+  border-radius: 7px;
+  font-size: 14px;
+}
+
+.entrega__dia:disabled {
+  color: #c1b9b6;
+}
+
+.entrega__dia--bloqueado,
+.entrega__dia--bloqueado:disabled,
+.entrega__dia--bloqueado:hover {
+  border-color: #c83f20;
+  border-radius: 7px;
+  background: #e94b35;
+  color: #fff;
+}
+
+.entrega__dia--bloqueado:disabled {
+  cursor: not-allowed;
+}
+
+.entrega__acoes {
+  margin-inline: calc(-1 * var(--espaco-lateral));
+}
+
+.entrega__overlay {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(35, 25, 22, 0.55);
+}
+
+.entrega__confirmacao {
+  display: flex;
+  width: min(100%, 440px);
+  align-items: center;
+  flex-direction: column;
+  gap: 14px;
+  padding: clamp(24px, 6vw, 40px);
+  border: 1px solid #eadfdb;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.entrega__confirmacao-icone {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border-radius: 50%;
+  background: #e8f4e8;
+  color: #287c35;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.entrega__confirmacao-sobretitulo {
+  color: var(--cor-destaque-escuro);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.entrega__confirmacao h2 {
+  color: var(--cor-titulo);
+  font-size: 22px;
+}
+
+.entrega__confirmacao > p:not(.entrega__confirmacao-sobretitulo) {
+  color: var(--cor-texto-suave);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.entrega__confirmacao .botao {
+  min-height: 48px;
+  width: 100%;
+  margin-top: 4px;
+  font-weight: 700;
+}
+
+@media (min-width: 480px) {
+  .entrega__grade--contato,
+  .entrega__grade--endereco {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 359px) {
+  .entrega__cep-linha {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .entrega__calcular {
+    width: 100%;
+  }
+
 }
