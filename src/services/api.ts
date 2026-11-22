@@ -4,11 +4,15 @@ export const EVENTO_SESSAO_EXPIRADA = 'atelie:sessao-expirada';
 
 export class ErroApi extends Error {
   readonly status: number;
+  readonly codigo?: string;
+  readonly ids?: string[];
 
-  constructor(status: number, mensagem: string) {
+  constructor(status: number, mensagem: string, codigo?: string, ids?: string[]) {
     super(mensagem);
     this.name = 'ErroApi';
     this.status = status;
+    this.codigo = codigo;
+    this.ids = ids;
   }
 }
 
@@ -76,20 +80,38 @@ export async function apiFetch(
   return resposta;
 }
 
-async function mensagemDeErro(resposta: Response): Promise<string> {
+async function detalheErro(
+  resposta: Response,
+): Promise<{ mensagem: string; codigo?: string; ids?: string[] }> {
   try {
-    const corpo = (await resposta.json()) as { message?: string | string[] };
-    if (Array.isArray(corpo.message)) return corpo.message.join(', ');
-    if (typeof corpo.message === 'string') return corpo.message;
+    const corpo = (await resposta.json()) as {
+      code?: string;
+      ids?: unknown;
+      message?: string | string[];
+    };
+    const mensagem = Array.isArray(corpo.message)
+      ? corpo.message.join(', ')
+      : typeof corpo.message === 'string'
+        ? corpo.message
+        : `A API respondeu com status ${resposta.status}.`;
+    return {
+      mensagem,
+      codigo: corpo.code,
+      ids: Array.isArray(corpo.ids)
+        ? corpo.ids.filter((id): id is string => typeof id === 'string')
+        : undefined,
+    };
   } catch {
-    // A resposta não veio em JSON; usa a mensagem genérica abaixo.
+    return { mensagem: `A API respondeu com status ${resposta.status}.` };
   }
-  return `A API respondeu com status ${resposta.status}.`;
 }
 
 export async function apiJson<T>(caminho: string, opcoes: RequestInit = {}): Promise<T> {
   const resposta = await apiFetch(caminho, opcoes);
-  if (!resposta.ok) throw new ErroApi(resposta.status, await mensagemDeErro(resposta));
+  if (!resposta.ok) {
+    const erro = await detalheErro(resposta);
+    throw new ErroApi(resposta.status, erro.mensagem, erro.codigo, erro.ids);
+  }
   if (resposta.status === 204) return undefined as T;
   return (await resposta.json()) as T;
 }

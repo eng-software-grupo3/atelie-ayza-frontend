@@ -1,8 +1,8 @@
 import { formatarMoeda } from '../data/pedido.ts';
 
 type Props = {
-  linhas: { rotulo: string; valor: number }[];
-  total: number;
+  linhas: { rotulo: string; valor: number | string }[];
+  total: number | string;
 };
 
 export function TotaisPedido({ linhas, total }: Props) {
@@ -11,12 +11,12 @@ export function TotaisPedido({ linhas, total }: Props) {
       {linhas.map((linha) => (
         <div className="personalizacao__linha" key={linha.rotulo}>
           <span>{linha.rotulo}</span>
-          <span>{formatarMoeda(linha.valor)}</span>
+          <span>{typeof linha.valor === 'number' ? formatarMoeda(linha.valor) : linha.valor}</span>
         </div>
       ))}
       <div className="personalizacao__linha personalizacao__linha--total">
         <strong>Total a pagar:</strong>
-        <strong>{formatarMoeda(total)}</strong>
+        <strong>{typeof total === 'number' ? formatarMoeda(total) : total}</strong>
       </div>
     </section>
   );

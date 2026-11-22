@@ -13,9 +13,11 @@ import { etapaPorSlug, etapas, indiceDaEtapa } from '../data/etapas.ts';
 import {
   catalogosIniciais,
   criarCorpoPedido,
+  dadosEntregaIniciais,
   rascunhoInicial,
   type CatalogosPedido,
   type ConjuntoRascunho,
+  type DadosEntregaPedido,
   type PedidoRascunho,
 } from '../data/pedido.ts';
 
@@ -25,6 +27,7 @@ export function PedidoNovoLayout() {
   const [conjuntos, setConjuntosState] = useState<ConjuntoRascunho[]>([rascunhoInicial()]);
   const [indiceConjuntoAtivo, setIndiceConjuntoAtivo] = useState(0);
   const [catalogos, setCatalogos] = useState<CatalogosPedido>(catalogosIniciais);
+  const [dadosEntrega, setDadosEntrega] = useState<DadosEntregaPedido>(dadosEntregaIniciais);
   const [avisoFluxo, setAvisoFluxo] = useState('');
   const pedido = useMemo(() => criarCorpoPedido(conjuntos), [conjuntos]);
   const rascunho = conjuntos[indiceConjuntoAtivo] ?? rascunhoInicial();
@@ -116,21 +119,26 @@ export function PedidoNovoLayout() {
             rascunho,
             setRascunho,
             conjuntos,
+            setConjuntos,
             indiceConjuntoAtivo,
             setIndiceConjuntoAtivo,
             catalogos,
             setCatalogos,
+            dadosEntrega,
+            setDadosEntrega,
             avisar,
             adicionarConjunto,
           }}
         />
       </main>
-      <StepFooter
-        etapa={etapa}
-        anterior={anterior}
-        onAvancar={avancar}
-        desabilitado={!podeAvancar}
-      />
+      {etapa.slug !== 'entrega' && (
+        <StepFooter
+          etapa={etapa}
+          anterior={anterior}
+          onAvancar={avancar}
+          desabilitado={!podeAvancar}
+        />
+      )}
     </>
   );
 }
