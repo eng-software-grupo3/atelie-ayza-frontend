@@ -3319,6 +3319,7 @@ a.botao--secundario:hover {
 
 .entrega__calendario {
   width: min(100%, 420px);
+  margin-inline: auto;
   padding: 14px;
   border-color: #eadfdb;
   border-radius: 12px;
@@ -3345,12 +3346,25 @@ a.botao--secundario:hover {
 }
 
 .entrega__dia {
-  border-radius: 50%;
+  border-radius: 7px;
   font-size: 14px;
 }
 
 .entrega__dia:disabled {
   color: #c1b9b6;
+}
+
+.entrega__dia--bloqueado,
+.entrega__dia--bloqueado:disabled,
+.entrega__dia--bloqueado:hover {
+  border-color: #c83f20;
+  border-radius: 7px;
+  background: #e94b35;
+  color: #fff;
+}
+
+.entrega__dia--bloqueado:disabled {
+  cursor: not-allowed;
 }
 
 .entrega__acoes {

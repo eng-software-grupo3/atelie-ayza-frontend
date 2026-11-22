@@ -23,6 +23,7 @@ export type CotacaoFrete = {
 export type DiaDisponivel = {
   data: string;
   disponivel: boolean;
+  bloqueada: boolean;
 };
 
 export type DatasDisponiveis = {
