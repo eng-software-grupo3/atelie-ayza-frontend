@@ -680,15 +680,15 @@ export function Entrega() {
           )}
         </section>
 
-        <section className="entrega__secao" aria-labelledby="entrega-data-titulo">
-          <h2 id="entrega-data-titulo">Data de entrega</h2>
+        <section className="entrega__secao entrega__secao--agenda" aria-labelledby="entrega-data-titulo">
+          <div className="entrega__calendario">
+            <h2 id="entrega-data-titulo" className="entrega__agenda-titulo">Data de entrega</h2>
           {modalidadeSelecionada && calendarioCarregado && calendario && (
-                <p className="entrega__ajuda">
+                <p className="entrega__ajuda entrega__primeira-data">
                   A primeira data possível é{' '}
                   {new Date(`${calendario.data_minima}T12:00:00`).toLocaleDateString('pt-BR')}.
                 </p>
               )}
-              <div className="entrega__calendario">
                 <div className="entrega__calendario-topo">
                   <button
                     aria-label="Mês anterior"
@@ -754,10 +754,10 @@ export function Entrega() {
                     })}
                   </div>
                 ) : null}
-              </div>
-          {!modalidadeSelecionada && (
-            <p className="entrega__ajuda">As datas serão atualizadas conforme a modalidade escolhida.</p>
-          )}
+            {!modalidadeSelecionada && (
+              <p className="entrega__ajuda">As datas serão atualizadas conforme a modalidade escolhida.</p>
+            )}
+          </div>
         </section>
 
         {!catalogoCompleto && (
