@@ -1,16 +1,15 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../contexts/AuthContext.tsx';
 import { formatarMoeda } from '../data/pedido.ts';
 import {
   ehStatusComProblema,
   formatarDataEntrega,
   formatarDataPedido,
 } from '../data/statusPedido.ts';
-import {
-  urlDaImagemCatalogo,
-  type ModeloCatalogo,
-  type TecidoCatalogo,
-} from '../services/catalogo.ts';
+import { calcularDespacho, urlDaFoto } from '../data/exibicaoPedido.ts';
+import type { ModeloCatalogo, TecidoCatalogo } from '../services/catalogo.ts';
 import { buscarPedido, type PedidoDetalhe, type PedidoResumo } from '../services/pedidos.ts';
+import { FotoCorpo } from './FotoCorpo.tsx';
 import { PedidoPreview } from './PedidoPreview.tsx';
 import { StatusPedido } from './StatusPedido.tsx';
 
@@ -21,25 +20,8 @@ type Props = {
   onVerDetalhes: () => void;
 };
 
-/** Data de despacho = entrega prevista menos o prazo do frete. */
-function calcularDespacho(entrega: string, prazoDias: number | undefined): string | null {
-  if (!entrega || !prazoDias) return null;
-  const base = /^\d{4}-\d{2}-\d{2}$/.test(entrega) ? `${entrega}T12:00:00` : entrega;
-  const data = new Date(base);
-  if (Number.isNaN(data.getTime())) return null;
-  data.setDate(data.getDate() - prazoDias);
-  return data.toISOString();
-}
-
-function urlDaFoto(foto: string | null | undefined): string | null {
-  const valor = foto?.trim();
-  if (!valor) return null;
-  if (/^(https?:\/\/|data:image\/)/i.test(valor)) return valor;
-  if (valor.startsWith('/')) return urlDaImagemCatalogo(valor);
-  return null;
-}
-
 export function PedidoCard({ pedido, modelos, tecidos, onVerDetalhes }: Props) {
+  const { usuario } = useAuth();
   const [detalhe, setDetalhe] = useState<PedidoDetalhe | null>(null);
   const [fotoAmpliada, setFotoAmpliada] = useState(false);
 
@@ -81,7 +63,10 @@ export function PedidoCard({ pedido, modelos, tecidos, onVerDetalhes }: Props) {
   return (
     <article className="pedido-card">
       <header className="pedido-card__topo">
-        <h2 className="pedido-card__numero">Pedido #{pedido.num_pedido}</h2>
+        <h2 className="pedido-card__numero">
+          <span>Pedido #{pedido.num_pedido}</span>
+          {usuario?.name && <small> • {usuario.name}</small>}
+        </h2>
         <StatusPedido status={pedido.status} />
       </header>
 
@@ -113,20 +98,7 @@ export function PedidoCard({ pedido, modelos, tecidos, onVerDetalhes }: Props) {
         </dl>
       </div>
 
-      {foto && (
-        <button
-          type="button"
-          className="pedido-card__foto"
-          onClick={() => setFotoAmpliada(true)}
-          aria-label="Ampliar foto do corpo"
-        >
-          <img src={foto} alt="" loading="lazy" />
-          <span className="pedido-card__foto-texto">
-            <strong>Foto do Corpo (Medidas)</strong>
-            <small>Clique na foto para ampliar</small>
-          </span>
-        </button>
-      )}
+      {conjunto && <FotoCorpo foto={foto} onAmpliar={() => setFotoAmpliada(true)} />}
 
       {ehStatusComProblema(pedido.status) && motivo && (
         <p className="alerta alerta--erro pedido-card__motivo">
@@ -137,7 +109,7 @@ export function PedidoCard({ pedido, modelos, tecidos, onVerDetalhes }: Props) {
       <footer className="pedido-card__rodape">
         <span>Criado em: {formatarDataPedido(pedido.data_pedido)}</span>
         <button type="button" className="pedido-card__acao" onClick={onVerDetalhes}>
-          Ver detalhes <span aria-hidden="true">&gt;</span>
+          Ver Resumo Completo <span aria-hidden="true">&gt;</span>
         </button>
       </footer>
 

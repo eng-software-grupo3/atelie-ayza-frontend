@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import { DetalhePedidoModal } from '../../components/DetalhePedidoModal.tsx';
 import { PedidoCard } from '../../components/PedidoCard.tsx';
 import {
+  carregarAderecos,
   carregarModelos,
   carregarTecidos,
+  type AderecoCatalogo,
   type ModeloCatalogo,
   type TecidoCatalogo,
 } from '../../services/catalogo.ts';
@@ -17,6 +19,7 @@ export function MeusPedidos() {
   const [tentativa, setTentativa] = useState(0);
   const [modelos, setModelos] = useState<ModeloCatalogo[]>([]);
   const [tecidos, setTecidos] = useState<TecidoCatalogo[]>([]);
+  const [aderecos, setAderecos] = useState<AderecoCatalogo[]>([]);
 
   // Catálogo só serve para desenhar a prévia; se falhar, os cartões seguem sem imagem.
   useEffect(() => {
@@ -26,6 +29,12 @@ export function MeusPedidos() {
         if (!ativo) return;
         setModelos(listaModelos);
         setTecidos(listaTecidos);
+      })
+      .catch(() => undefined);
+    // Adereços só colorem os pontos no detalhe; carregam à parte.
+    void carregarAderecos()
+      .then((lista) => {
+        if (ativo) setAderecos(lista);
       })
       .catch(() => undefined);
     return () => {
@@ -63,13 +72,12 @@ export function MeusPedidos() {
 
   return (
     <main className="app-main meus-pedidos">
-      <div className="acoes">
-        <Link className="botao" to="/pedido/novo/modelo">
+      <div className="meus-pedidos__cabecalho">
+        <h1 className="meus-pedidos__titulo">Meus Pedidos Realizados</h1>
+        <Link className="meus-pedidos__novo" to="/pedido/novo/modelo">
           + Fazer Novo Pedido
         </Link>
       </div>
-
-      <h1 className="meus-pedidos__titulo">Meus pedidos</h1>
 
       {erro ? (
         <div className="alerta alerta--erro" role="alert">
@@ -111,6 +119,9 @@ export function MeusPedidos() {
           key={idAberto}
           id={idAberto}
           numPedido={pedidoAberto?.num_pedido ?? 0}
+          modelos={modelos}
+          tecidos={tecidos}
+          aderecos={aderecos}
           onFechar={fecharModal}
         />
       )}

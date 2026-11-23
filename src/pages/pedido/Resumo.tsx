@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-  type SyntheticEvent,
-} from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type SyntheticEvent } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { TotaisPedido } from '../../components/TotaisPedido.tsx';
 import { useContainedImageArea } from '../../hooks/useContainedImageArea.ts';
@@ -15,11 +9,7 @@ import type {
   ConjuntoRascunho,
   ParteDaPeca,
 } from '../../data/pedido.ts';
-import {
-  coresDosAderecos,
-  formatarCentavos,
-  subtotalPedidoCentavos,
-} from '../../data/pedido.ts';
+import { coresDosAderecos, formatarCentavos, subtotalPedidoCentavos } from '../../data/pedido.ts';
 import {
   aplicarTecidoNoModelo,
   carregarAderecos,
@@ -143,22 +133,17 @@ function PreviewPeca({
   }
 
   const srcTecido =
-    resultadoTecido?.modeloSvg === modelo.svg_url &&
-    resultadoTecido.fotoTecido === tecido.foto
+    resultadoTecido?.modeloSvg === modelo.svg_url && resultadoTecido.fotoTecido === tecido.foto
       ? resultadoTecido.src
       : null;
   const erroTecido =
-    resultadoTecido?.modeloSvg === modelo.svg_url &&
-    resultadoTecido.fotoTecido === tecido.foto
+    resultadoTecido?.modeloSvg === modelo.svg_url && resultadoTecido.fotoTecido === tecido.foto
       ? resultadoTecido.erro
       : null;
 
   return (
     <figure className="resumo-peca">
-      <div
-        className="resumo-peca__imagem"
-        ref={caixaRef}
-      >
+      <div className="resumo-peca__imagem" ref={caixaRef}>
         <div className="resumo-peca__area" data-parte={parte} style={estiloArea}>
           <img
             src={srcTecido ?? srcModelo(modelo.svg_url)}
@@ -243,7 +228,11 @@ export function CardConjuntoResumo({
       <header className="resumo-conjunto__cabecalho">
         <h2>Conjunto #{numero}</h2>
         <strong>{formatarCentavos(precoCentavos)}</strong>
-        <button className="botao botao--secundario botao--pequeno" type="button" onClick={onAlterar}>
+        <button
+          className="botao botao--secundario botao--pequeno"
+          type="button"
+          onClick={onAlterar}
+        >
           Alterar
         </button>
       </header>
@@ -302,11 +291,7 @@ export function CardConjuntoResumo({
                   aria-haspopup="dialog"
                   aria-label="Ampliar foto de referência das medidas"
                 >
-                  <img
-                    className="resumo-conjunto__foto"
-                    src={conjunto.local.fotoPrevia}
-                    alt=""
-                  />
+                  <img className="resumo-conjunto__foto" src={conjunto.local.fotoPrevia} alt="" />
                   <span>Toque para ampliar</span>
                 </button>
               ) : (
@@ -380,10 +365,12 @@ function etapaDoItemIndisponivel(
   catalogos: CatalogosPedido,
 ): { indice: number; etapa: 'modelo' | 'tecido' | 'aderecos'; mensagem: string } | null {
   for (const [indice, conjunto] of conjuntos.entries()) {
-    const modeloCima = catalogos.modelos?.find((modelo) =>
-      modelo.id === conjunto.cima.id_modelo && modelo.parte === 'CIMA');
-    const modeloBaixo = catalogos.modelos?.find((modelo) =>
-      modelo.id === conjunto.baixo.id_modelo && modelo.parte === 'BAIXO');
+    const modeloCima = catalogos.modelos?.find(
+      (modelo) => modelo.id === conjunto.cima.id_modelo && modelo.parte === 'CIMA',
+    );
+    const modeloBaixo = catalogos.modelos?.find(
+      (modelo) => modelo.id === conjunto.baixo.id_modelo && modelo.parte === 'BAIXO',
+    );
     if (!modeloCima || !modeloBaixo) {
       return {
         indice,
@@ -400,8 +387,9 @@ function etapaDoItemIndisponivel(
       };
     }
 
-    const idsAderecos = [...conjunto.cima.aderecos, ...conjunto.baixo.aderecos]
-      .map((aplicado) => aplicado.id_adereco);
+    const idsAderecos = [...conjunto.cima.aderecos, ...conjunto.baixo.aderecos].map(
+      (aplicado) => aplicado.id_adereco,
+    );
     if (idsAderecos.some((id) => !catalogos.aderecos?.some((adereco) => adereco.id === id))) {
       return {
         indice,
@@ -414,13 +402,8 @@ function etapaDoItemIndisponivel(
 }
 
 export function Resumo() {
-  const {
-    conjuntos,
-    setIndiceConjuntoAtivo,
-    setCatalogos,
-    avisar,
-    adicionarConjunto,
-  } = useOutletContext<ContextoPedido>();
+  const { conjuntos, setIndiceConjuntoAtivo, setCatalogos, avisar, adicionarConjunto } =
+    useOutletContext<ContextoPedido>();
   const navigate = useNavigate();
   const [catalogoResumo, setCatalogoResumo] = useState<CatalogosPedido | null>(null);
   const [carregando, setCarregando] = useState(true);
@@ -444,7 +427,9 @@ export function Resumo() {
       })
       .catch((e: unknown) => {
         if (ativo) {
-          setErro(e instanceof Error ? e.message : 'Não foi possível carregar o catálogo do pedido.');
+          setErro(
+            e instanceof Error ? e.message : 'Não foi possível carregar o catálogo do pedido.',
+          );
         }
       })
       .finally(() => {
@@ -460,12 +445,13 @@ export function Resumo() {
     if (carregando || erro || !catalogoResumo) return;
     if (
       conjuntos.length === 0 ||
-      conjuntos.every((conjunto) =>
-        !conjunto.cima.id_modelo &&
-        !conjunto.baixo.id_modelo &&
-        !conjunto.id_tecido &&
-        conjunto.cima.aderecos.length === 0 &&
-        conjunto.baixo.aderecos.length === 0,
+      conjuntos.every(
+        (conjunto) =>
+          !conjunto.cima.id_modelo &&
+          !conjunto.baixo.id_modelo &&
+          !conjunto.id_tecido &&
+          conjunto.cima.aderecos.length === 0 &&
+          conjunto.baixo.aderecos.length === 0,
       )
     ) {
       avisar('Comece escolhendo os modelos para montar seu pedido.');
@@ -473,8 +459,9 @@ export function Resumo() {
       return;
     }
 
-    const incompleto = conjuntos.findIndex((conjunto) =>
-      !conjunto.cima.id_modelo || !conjunto.baixo.id_modelo);
+    const incompleto = conjuntos.findIndex(
+      (conjunto) => !conjunto.cima.id_modelo || !conjunto.baixo.id_modelo,
+    );
     if (incompleto >= 0) {
       setIndiceConjuntoAtivo(incompleto);
       avisar(`Complete os modelos do conjunto #${incompleto + 1} para ver o resumo.`);
@@ -497,19 +484,15 @@ export function Resumo() {
       return;
     }
     setValidado(true);
-  }, [
-    avisar,
-    carregando,
-    catalogoResumo,
-    conjuntos,
-    erro,
-    navigate,
-    setIndiceConjuntoAtivo,
-  ]);
+  }, [avisar, carregando, catalogoResumo, conjuntos, erro, navigate, setIndiceConjuntoAtivo]);
   /* oxlint-enable react(set-state-in-effect) */
 
   if (carregando) {
-    return <p className="resumo-status" role="status">Carregando catálogo do pedido...</p>;
+    return (
+      <p className="resumo-status" role="status">
+        Carregando catálogo do pedido...
+      </p>
+    );
   }
   if (erro) {
     return (
@@ -522,25 +505,29 @@ export function Resumo() {
     );
   }
   if (!catalogoResumo || !validado) {
-    return <p className="resumo-status" role="status">Conferindo os itens do pedido...</p>;
+    return (
+      <p className="resumo-status" role="status">
+        Conferindo os itens do pedido...
+      </p>
+    );
   }
 
   const modelos = catalogoResumo.modelos ?? [];
   const tecidos = catalogoResumo.tecidos ?? [];
   const aderecos = catalogoResumo.aderecos ?? [];
-  const precos = conjuntos.map((conjunto) =>
-    subtotalPedidoCentavos([conjunto], catalogoResumo),
-  );
+  const precos = conjuntos.map((conjunto) => subtotalPedidoCentavos([conjunto], catalogoResumo));
   const subtotal = subtotalPedidoCentavos(conjuntos, catalogoResumo);
 
   return (
     <div className="resumo-pedido">
       <h1>Resumo do Pedido</h1>
       {conjuntos.map((conjunto, indice) => {
-        const modeloCima = modelos.find((modelo) =>
-          modelo.id === conjunto.cima.id_modelo && modelo.parte === 'CIMA')!;
-        const modeloBaixo = modelos.find((modelo) =>
-          modelo.id === conjunto.baixo.id_modelo && modelo.parte === 'BAIXO')!;
+        const modeloCima = modelos.find(
+          (modelo) => modelo.id === conjunto.cima.id_modelo && modelo.parte === 'CIMA',
+        )!;
+        const modeloBaixo = modelos.find(
+          (modelo) => modelo.id === conjunto.baixo.id_modelo && modelo.parte === 'BAIXO',
+        )!;
         const tecido = tecidos.find((item) => item.id === conjunto.id_tecido)!;
         return (
           <CardConjuntoResumo
