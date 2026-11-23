@@ -63,13 +63,12 @@ export function MeusPedidos() {
 
   return (
     <main className="app-main meus-pedidos">
-      <div className="acoes">
+      <header className="meus-pedidos__cabecalho">
+        <h1 className="meus-pedidos__titulo">Meus pedidos</h1>
         <Link className="botao" to="/pedido/novo/modelo">
           + Fazer Novo Pedido
         </Link>
-      </div>
-
-      <h1 className="meus-pedidos__titulo">Meus pedidos</h1>
+      </header>
 
       {erro ? (
         <div className="alerta alerta--erro" role="alert">

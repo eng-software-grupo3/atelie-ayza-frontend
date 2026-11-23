@@ -143,6 +143,11 @@ export function Aderecos() {
       return;
     }
 
+    // O backend e o banco armazenam coordenadas com até 4 casas decimais.
+    // Guardamos a mesma precisão no rascunho para manter prévia e pedido alinhados.
+    const coordenadaX = Math.round(x * 10000) / 10000;
+    const coordenadaY = Math.round(y * 10000) / 10000;
+
     setAviso('');
     setRascunho((atual) => ({
       ...atual,
@@ -150,7 +155,7 @@ export function Aderecos() {
         ...atual[peca === 'CIMA' ? 'cima' : 'baixo'],
         aderecos: [
           ...atual[peca === 'CIMA' ? 'cima' : 'baixo'].aderecos,
-          { id_adereco: adereco.id, coordenada_x: x, coordenada_y: y },
+          { id_adereco: adereco.id, coordenada_x: coordenadaX, coordenada_y: coordenadaY },
         ],
       },
     }));

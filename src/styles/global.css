@@ -319,12 +319,6 @@ textarea {
   padding-bottom: calc(140px + env(safe-area-inset-bottom));
 }
 
-.acoes {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
 /* Marca ----------------------------------------------------------------- */
 
 .logo__link {
@@ -3490,6 +3484,13 @@ a.botao--secundario:hover {
 
 .meus-pedidos {
   gap: 14px;
+}
+
+.meus-pedidos__cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .meus-pedidos__titulo {
