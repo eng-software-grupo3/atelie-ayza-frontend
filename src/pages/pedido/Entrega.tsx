@@ -205,19 +205,14 @@ export function Entrega() {
   // A cotação revalida endereço e preço para o mês e prazo de frete escolhidos.
   /* oxlint-disable react(set-state-in-effect) */
   useEffect(() => {
-    if (!modalidadeSelecionada) {
-      setCalendario(null);
-      setErroCalendario('');
-      setCarregandoCalendario(false);
-      return;
-    }
-
     let ativo = true;
     setCalendario(null);
     setErroCalendario('');
     setCarregandoCalendario(true);
 
-    void carregarDatasDisponiveis(mesExibido, modalidadeSelecionada.prazo_frete_dias)
+    // Antes da escolha do frete, mostra a agenda considerando apenas a confecção.
+    // Ao escolher uma modalidade, atualiza os dias com o prazo daquele frete.
+    void carregarDatasDisponiveis(mesExibido, modalidadeSelecionada?.prazo_frete_dias ?? 0)
       .then((resultado) => {
         if (ativo) setCalendario(resultado);
       })
@@ -685,17 +680,15 @@ export function Entrega() {
           )}
         </section>
 
-        <section className="entrega__secao" aria-labelledby="entrega-data-titulo">
-          <h2 id="entrega-data-titulo">Data de entrega</h2>
-          {modalidadeSelecionada ? (
-            <>
-              {calendarioCarregado && calendario && (
-                <p className="entrega__ajuda">
+        <section className="entrega__secao entrega__secao--agenda" aria-labelledby="entrega-data-titulo">
+          <div className="entrega__calendario">
+            <h2 id="entrega-data-titulo" className="entrega__agenda-titulo">Data de entrega</h2>
+          {modalidadeSelecionada && calendarioCarregado && calendario && (
+                <p className="entrega__ajuda entrega__primeira-data">
                   A primeira data possível é{' '}
                   {new Date(`${calendario.data_minima}T12:00:00`).toLocaleDateString('pt-BR')}.
                 </p>
               )}
-              <div className="entrega__calendario">
                 <div className="entrega__calendario-topo">
                   <button
                     aria-label="Mês anterior"
@@ -741,9 +734,8 @@ export function Entrega() {
                     {Array.from({ length: diasNoMes }, (_, indice) => {
                       const dia = indice + 1;
                       const data = `${mesExibido}-${String(dia).padStart(2, '0')}`;
-                      const disponivel = calendario.dias.some(
-                        (item) => item.data === data && item.disponivel,
-                      );
+                      const informacaoDia = calendario.dias.find((item) => item.data === data);
+                      const disponivel = Boolean(informacaoDia?.disponivel);
                       const selecionada = dadosEntrega.dataEntregaPrevista === data;
                       return (
                         <button
@@ -761,11 +753,10 @@ export function Entrega() {
                     })}
                   </div>
                 ) : null}
-              </div>
-            </>
-          ) : (
-            <p className="entrega__ajuda">Calcule o frete e escolha uma modalidade para ver as datas.</p>
-          )}
+            {!modalidadeSelecionada && (
+              <p className="entrega__ajuda">As datas serão atualizadas conforme a modalidade escolhida.</p>
+            )}
+          </div>
         </section>
 
         {!catalogoCompleto && (
