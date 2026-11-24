@@ -17,9 +17,9 @@ import {
 } from '../services/catalogo.ts';
 
 type Props = {
-  modeloCima: ModeloCatalogo | null;
-  modeloBaixo: ModeloCatalogo | null;
-  tecido?: TecidoCatalogo | null;
+  modeloCima: Pick<ModeloCatalogo, 'id' | 'nome' | 'parte' | 'svg_url'> | null;
+  modeloBaixo: Pick<ModeloCatalogo, 'id' | 'nome' | 'parte' | 'svg_url'> | null;
+  tecido?: Pick<TecidoCatalogo, 'foto'> | null;
   carregando?: boolean;
   compacto?: boolean;
   pontos?: PontoAdereco[];

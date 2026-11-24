@@ -16,6 +16,7 @@ import {
 } from './pages/gestao/Estoque.tsx';
 import { Agenda } from './pages/gestao/Agenda.tsx';
 import { Dashboard } from './pages/gestao/Dashboard.tsx';
+import { PedidoGestaoDetalhe } from './pages/gestao/PedidoGestaoDetalhe.tsx';
 import { Pedidos } from './pages/gestao/Pedidos.tsx';
 import { Aderecos } from './pages/pedido/Aderecos.tsx';
 import { Entrega } from './pages/pedido/Entrega.tsx';
@@ -51,6 +52,7 @@ function App() {
         <Route path="/gestao" element={<GestaoLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="pedidos" element={<Pedidos />} />
+          <Route path="pedidos/:id" element={<PedidoGestaoDetalhe />} />
           <Route path="estoque" element={<Estoque />}>
             <Route index element={<Navigate to="tecidos" replace />} />
             <Route path="tecidos" element={<EstoqueTecidos />} />
